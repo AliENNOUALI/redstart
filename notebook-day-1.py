@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return np, plt, sci
+    return la, np, plt, sci
 
 
 @app.cell(hide_code=True)
@@ -439,15 +439,59 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    On cherche une force $f(t)$ telle que $y(0)=10$, $\dot y(0)=-2$, $y(5)=\ell/2=1$, $\dot y(5)=0$, avec $\theta=0$ et $\phi=0$ (poussée alignée avec l'axe vertical).
+    Conditions : $y(0)=10$, $\dot y(0)=-2$, $\theta=\phi=0$, $y(5)=\ell/2=1$, $\dot y(5)=0$.
 
-    On cherche $y(t) = a + b t + c t^2 + d t^3$ ; les 4 conditions donnent
-    $a=10$, $b=-2$, $c=-1.48$, $d=0.224$. Comme $\ddot y = 2c + 6dt$ et $f = M(\ddot y + g)$, il vient
-
-    $$
-    f(t) = -1.96 + 1.344\,t.
-    $$
+    On cherche $y(t)$ polynomial cubique vérifiant ces 4 conditions ainsi que $f(t)=M(\ddot y+g)$.
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, la, np, plt, redstart_solve):
+    A = np.array([
+        [1, 0,  0,    0],
+        [0, 1,  0,    0],
+        [1, 5, 25,  125],
+        [0, 1, 10,   75],
+    ])
+    rhs = np.array([10.0, -2.0, 1.0, 0.0])
+    a, b, c, d = la.solve(A, rhs)
+    print(f"a={a}, b={b}, c={c}, d={d}")
+
+    def f_landing(t):
+        return M * (2 * c + 6 * d * t + g)
+
+    def controlled_landing():
+        t_span = [0.0, 5.0]
+        y0 = [0.0, 0.0, 10.0, -2.0, 0.0, 0.0]
+        def f_phi(t, s):
+            return np.array([f_landing(t), 0.0])
+        sol = redstart_solve(t_span, y0, f_phi)
+        t = np.linspace(t_span[0], t_span[1], 1000)
+        s = sol(t)
+
+        fig, axes = plt.subplots(2, 1, figsize=(8, 9), sharex=True)
+
+        axes[0].plot(t, s[2], color="tab:blue", lw=2, label=r"$y(t)$ (simulation)")
+        axes[0].axhline(l/2, color="green", ls="--", label=r"cible $y=\ell/2=1$")
+        axes[0].set_ylabel("hauteur $y$ (m)")
+        axes[0].set_title("Hauteur du centre de masse")
+        axes[0].grid(True); axes[0].legend(loc="upper right", framealpha=0.9)
+
+        axes[1].plot(t, s[3], color="tab:orange", lw=2, label=r"$\dot y(t)$ (simulation)")
+        axes[1].axhline(0, color="green", ls="--", label=r"cible $\dot y=0$")
+        axes[1].set_ylabel("vitesse $\\dot y$ (m/s)")
+        axes[1].set_title("Vitesse verticale")
+        axes[1].grid(True); axes[1].legend(loc="lower right", framealpha=0.9)
+
+        plt.suptitle("Atterrissage contrôlé")
+        plt.tight_layout()
+        plt.show()
+
+        print(f"y(5)  = {sol(5.0)[2]:.6f}  (cible : 1.0)")
+        print(f"vy(5) = {sol(5.0)[3]:.6f}  (cible : 0.0)")
+
+    controlled_landing()
     return
 
 

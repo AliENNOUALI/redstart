@@ -492,7 +492,7 @@ def _(M, g, l, la, np, plt, redstart_solve):
         print(f"vy(5) = {sol(5.0)[3]:.6f}  (cible : 0.0)")
 
     controlled_landing()
-    return
+    return (f_landing,)
 
 
 @app.cell(hide_code=True)
@@ -513,7 +513,7 @@ def _(mo):
 def _():
     from svg import svg, transform, animate_transform
 
-    return svg, transform
+    return animate_transform, svg, transform
 
 
 @app.cell(hide_code=True)
@@ -744,6 +744,57 @@ def _(mo):
     return
 
 
+@app.cell
+def _(M, animate_transform, g, l, mo, np, svg, transform, world):
+    def booster_anim(x, y, theta, f, phi, T):
+        body_w  = 0.2
+        flame_w = 0.25
+
+        def theta_deg(t): return float(np.degrees(theta(t)))
+        def phi_deg(t):   return float(np.degrees(phi(t)))
+        def flame_len(t):
+            f_val = float(f(t))
+            return (l / 2) * (f_val / (M * g)) if f_val > 0 else 1e-6
+
+        return animate_transform.translate(x=x, y=y, T=T)(
+            animate_transform.rotate(a=theta_deg, T=T)(
+                svg.rect(
+                    x=-body_w/2, y=-l/2, width=body_w, height=l,
+                    fill="silver", stroke="black", stroke_width=0.02,
+                )(),
+                transform.translate(x=0, y=-l/2)(
+                    animate_transform.rotate(a=phi_deg, T=T)(
+                        animate_transform.scale(x=1.0, y=flame_len, T=T)(
+                            svg.polygon(
+                                points=f"{-flame_w/2},0 {flame_w/2},0 0,-1",
+                                fill="orange", stroke="red", stroke_width=0.02,
+                            )()
+                        )
+                    )
+                )
+            )
+        )
+
+    def booster_anim_demo():
+        T = 5.0
+        return booster_anim(
+            x=lambda t: -l/2 + l * (t / T),
+            y=lambda t: l/2 + l/2 * (t / T),
+            theta=lambda t: (t / T) * 2 * np.pi,
+            f=lambda t: M * g * (t / T),
+            phi=lambda t: 2 * np.pi * (t / T),
+            T=T,
+        )
+
+    mo.Html(
+        "<div style='display:flex; justify-content:center;'>"
+        + str(world([-3, 3, -2, 4], booster_anim_demo()))
+        + "</div>"
+    )
+
+    return (booster_anim,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -759,6 +810,101 @@ def _(mo):
 
     4. The "controlled landing" scenario (see above).
     """)
+    return
+
+
+@app.cell
+def _(booster_anim, redstart_solve, world):
+    def simulate_and_anim(y0, f_phi_fn, T=5.0, view_box=(-5, 5, -2, 12)):
+        sol = redstart_solve([0.0, T], y0, f_phi_fn)
+
+        def make_state(idx):
+            return lambda t: float(sol(t)[idx])
+
+        def f_of_t(t):
+            return float(f_phi_fn(t, sol(t))[0])
+
+        def phi_of_t(t):
+            return float(f_phi_fn(t, sol(t))[1])
+
+        return world(view_box, booster_anim(
+            x=make_state(0),
+            y=make_state(2),
+            theta=make_state(4),
+            f=f_of_t,
+            phi=phi_of_t,
+            T=T,
+        ))
+
+    y0_default = [0.0, 0.0, 10.0, 0.0, 0.0, 0.0]
+    return simulate_and_anim, y0_default
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Chute libre
+    """)
+    return
+
+
+@app.cell
+def _(mo, np, simulate_and_anim, y0_default):
+    anim1 = simulate_and_anim(y0_default, lambda t, s: np.array([0.0, 0.0]))
+    mo.Html(str(anim1))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Equilibre vertical
+    """)
+    return
+
+
+@app.cell
+def _(M, g, mo, np, simulate_and_anim, y0_default):
+    anim2 = simulate_and_anim(y0_default, lambda t, s: np.array([M * g, 0.0]))
+    mo.Html(str(anim2))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    f = Mg , phi = pi/8
+    """)
+    return
+
+
+@app.cell
+def _(M, g, mo, np, simulate_and_anim, y0_default):
+    anim3 = simulate_and_anim(
+        y0_default,
+        lambda t, s: np.array([M * g, np.pi / 8]),
+        view_box=(-10, 10, -2, 12),
+    )
+    mo.Html(str(anim3))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Atterissage contrôlé
+    """)
+    return
+
+
+@app.cell
+def _(f_landing, mo, np, simulate_and_anim):
+    y0_landing = [0.0, 0.0, 10.0, -2.0, 0.0, 0.0]
+    anim4 = simulate_and_anim(
+        y0_landing,
+        lambda t, s: np.array([f_landing(t), 0.0]),
+    )
+    mo.Html(str(anim4))
     return
 
 

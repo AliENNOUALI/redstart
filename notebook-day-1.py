@@ -281,6 +281,22 @@ def _(mo):
     return
 
 
+@app.cell
+def _(J, M, g, l, np):
+    def F(s, f, phi):
+        x, vx, y, vy, theta, omega = s
+        return np.array([
+            vx,
+            (f / M) * np.sin(theta + phi),
+            vy,
+            (f / M) * np.cos(theta + phi) - g,
+            omega,
+            -(l * f * np.sin(phi)) / J,
+        ])
+
+    return (F,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -322,19 +338,11 @@ def _(mo):
 
 
 @app.cell
-def _(J, M, g, l, np, sci):
+def _(F, sci):
     def redstart_solve(t_span, y0, f_phi):
         def fun(t, s):
-            x, vx, y, vy, theta, omega = s
             f, phi = f_phi(t, s)
-            return [
-                vx,
-                (f / M) * np.sin(theta + phi),
-                vy,
-                (f / M) * np.cos(theta + phi) - g,
-                omega,
-                -(l * f * np.sin(phi)) / J,
-            ]
+            return F(s, f, phi)
         result = sci.solve_ivp(fun, t_span, y0, dense_output=True)
         return result["sol"]
 

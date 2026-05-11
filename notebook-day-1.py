@@ -513,7 +513,7 @@ def _(mo):
 def _():
     from svg import svg, transform, animate_transform
 
-    return
+    return svg, transform
 
 
 @app.cell(hide_code=True)
@@ -570,6 +570,44 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo, svg, transform):
+    def world(view_box, *objects):
+        x_min, x_max, y_min, y_max = view_box
+        width = x_max - x_min
+        height = y_max - y_min
+        return svg.svg(
+            viewBox=f"0 0 {width} {height}",
+            xmlns="http://www.w3.org/2000/svg",
+            width="320",
+        )(
+            transform.translate(x=-x_min, y=y_max)(
+                transform.scale(x=1, y=-1)(
+                    svg.rect(x=x_min, y=0, width=width, height=y_max,
+                             fill="#87CEEB"),                       # ciel
+                    svg.rect(x=x_min, y=y_min, width=width, height=-y_min,
+                             fill="#8B5A2B"),                       # sol
+                    svg.rect(x=-1, y=-0.05, width=2, height=0.1,
+                             fill="green"),                          # cible
+                    *objects,
+                )
+            )
+        )
+
+    # Test : trois scènes côte à côte
+    mo.Html(
+        "<div style='display:flex; gap:1em; justify-content:space-around;'>"
+        + str(world([-3, 3, -2, 4]))
+        + str(world([-3, 3, -2, 4],
+                    svg.rect(x=-1, y=0, width=2, height=2, fill="black")))
+        + str(world([-3, 3, -2, 4],
+                    svg.rect(x=-3, y=2, width=2, height=2, fill="red"),
+                    svg.rect(x=1, y=2, width=2, height=2, fill="blue")))
+        + "</div>"
+    )
+    return (world,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -619,6 +657,43 @@ def _(mo):
     )
     ```
     """)
+    return
+
+
+@app.cell
+def _(M, g, l, mo, np, svg, transform, world):
+    def booster(x, y, theta, f, phi):
+        body_w  = 0.2
+        flame_w = 0.25
+        flame_len = (l / 2) * (f / (M * g)) if f > 0 else 0.0
+        theta_deg = np.degrees(theta)
+        phi_deg   = np.degrees(phi)
+        return transform.translate(x=x, y=y)(
+            transform.rotate(a=theta_deg)(
+                svg.rect(
+                    x=-body_w/2, y=-l/2, width=body_w, height=l,
+                    fill="silver", stroke="black", stroke_width=0.02,
+                ),
+                transform.translate(x=0, y=-l/2)(
+                    transform.rotate(a=phi_deg)(
+                        svg.polygon(
+                            points=f"{-flame_w/2},0 {flame_w/2},0 0,{-flame_len}",
+                            fill="orange", stroke="red", stroke_width=0.02,
+                        )
+                    )
+                )
+            )
+        )
+
+    mo.Html(
+        "<div style='display:flex; gap:1em; justify-content:space-around;'>"
+        + str(world([-3, 3, -2, 4], booster(0, l/2, 0, 0, 0)))
+        + str(world([-3, 3, -2, 4], booster(0, l, 0, M * g, 0)))
+        + str(world([-3, 3, -2, 4],
+                    booster(-l/2, l, np.pi/4, 2*M*g, np.pi/2)))
+        + "</div>"
+    )
+
     return
 
 

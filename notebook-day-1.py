@@ -173,7 +173,7 @@ def _(mo):
     mo.md(r"""
     On applique la deuxième loi de Newton $M\ddot{\vec{r}} = \vec{F}$ :
 
-    $$M\ddot{x} = f\sin(\theta + \phi)$$
+    $$M\ddot{x} = -f\sin(\theta + \phi)$$
 
     $$M\ddot{y} = f\cos(\theta + \phi) - Mg$$
 

@@ -439,6 +439,21 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On cherche une force $f(t)$ telle que $y(0)=10$, $\dot y(0)=-2$, $y(5)=\ell/2=1$, $\dot y(5)=0$, avec $\theta=0$ et $\phi=0$ (poussée alignée avec l'axe vertical).
+
+    On cherche $y(t) = a + b t + c t^2 + d t^3$ ; les 4 conditions donnent
+    $a=10$, $b=-2$, $c=-1.48$, $d=0.224$. Comme $\ddot y = 2c + 6dt$ et $f = M(\ddot y + g)$, il vient
+
+    $$
+    f(t) = -1.96 + 1.344\,t.
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # Animations
 
     It's very handy to visualize the evolution of our booster "as a movie"!

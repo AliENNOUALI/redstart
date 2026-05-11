@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return np, sci
+    return np, plt, sci
 
 
 @app.cell(hide_code=True)
@@ -153,7 +153,7 @@ def _(mo):
 
     Les coordonnées cartésiennes de la force sont :
 
-    $$f_x = f \sin(\theta + \phi), \qquad f_y = f \cos(\theta + \phi)$$
+    $$f_x = -f \sin(\theta + \phi), \qquad f_y = f \cos(\theta + \phi)$$
     """)
     return
 
@@ -346,7 +346,7 @@ def _(F, sci):
         result = sci.solve_ivp(fun, t_span, y0, dense_output=True)
         return result["sol"]
 
-    return
+    return (redstart_solve,)
 
 
 @app.cell(hide_code=True)
@@ -360,6 +360,42 @@ def _(mo):
 
     Check your `redstart_solve` function in this scenario and produce a graph that allows us to check the above answer numerically/visually.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    En chute libre ($f=0$) depuis $y(0) = 10$ m avec $\dot{y}(0) = 0$ :
+
+    $$y(t) = 10 - \frac{1}{2}g\,t^2$$
+
+    En posant $y(t^*) = \ell = 1$ :
+
+    $$t^* = \sqrt{18} = 3\sqrt{2} \approx 4{,}243 \text{ s}$$
+    """)
+    return
+
+
+@app.cell
+def _(l, np, plt, redstart_solve):
+    def free_fall_example():
+        t_span = [0.0, 5.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, 0.0, 0.0]
+        def f_phi(t, y):
+            return np.array([0.0, 0.0])
+        sol = redstart_solve(t_span, y0, f_phi)
+        t = np.linspace(t_span[0], t_span[1], 1000)
+        y_t = sol(t)[2]
+        plt.plot(t, y_t, label=r"$y(t)$ (height in meters)")
+        plt.plot(t, l * np.ones_like(t), color="grey", ls="--", label=r"$y=\ell$")
+        plt.axvline(3*np.sqrt(2), color="red", ls=":", label=r"$t^*=3\sqrt{2}$")
+        plt.title("Free Fall")
+        plt.xlabel("time $t$")
+        plt.grid(True)
+        plt.legend()
+        return plt.gcf()
+    free_fall_example()
     return
 
 

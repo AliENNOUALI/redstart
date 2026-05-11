@@ -233,13 +233,18 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Le réacteur applique une force à la base du booster, à une distance $\ell$ du centre de masse. Le couple résultant vaut :
+    Le réacteur est situé à la base, à la distance $\ell/2$ du centre de masse. Sa position par rapport au centre vaut $(\,\tfrac{\ell}{2}\sin\theta, -\tfrac{\ell}{2}\cos\theta)$. Le couple ($z$-composante) $\tau = r_x F_y - r_y F_x$ vaut :
 
-    $$J\ddot{\theta} = -\ell\, f\sin\phi$$
+    $$
+    \tau = \frac{\ell f}{2}\big(\sin\theta\cos(\theta+\phi) - \cos\theta\sin(\theta+\phi)\big)
+         = -\frac{\ell f}{2}\sin\phi.
+    $$
 
-    soit :
+    D'où l'équation de l'inclinaison :
 
-    $$\ddot{\theta} = -\frac{\ell\, f\sin\phi}{J}$$
+    $$
+    J\,\ddot{\theta} = -\frac{\ell\,f}{2}\sin\phi.
+    $$
     """)
     return
 
@@ -270,22 +275,24 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    L'espace d'état est de dimension $n = 6$. Le vecteur d'état est :
+    L'état est de dimension $n = 6$ :
 
-    $$s = (x,\; v_x,\; y,\; v_y,\; \theta,\; \omega) \in \mathbb{R}^6$$
+    $$
+    s = (x, v_x, y, v_y, \theta, \omega).
+    $$
 
-    Le champ de vecteurs $F:\mathbb{R}^{8} \to \mathbb{R}^6$ tel que $\dot{s} = F(s, f, \phi)$ est :
+    Le système $\dot{s} = F(s, f, \phi)$ s'écrit
 
     $$
     F(s, f, \phi) =
     \begin{pmatrix}
     v_x \\
-    \dfrac{f}{M}\sin(\theta+\phi) \\
+    -f\sin(\theta+\phi)/M \\
     v_y \\
-    \dfrac{f}{M}\cos(\theta+\phi) - g \\
+    f\cos(\theta+\phi)/M - g \\
     \omega \\
-    -\dfrac{\ell\, f\sin\phi}{J}
-    \end{pmatrix}
+    -\ell\,f\,\sin\phi/(2J)
+    \end{pmatrix}.
     $$
     """)
     return
@@ -295,13 +302,15 @@ def _(mo):
 def _(J, M, g, l, np):
     def F(s, f, phi):
         x, vx, y, vy, theta, omega = s
+        fx = -f * np.sin(theta + phi)
+        fy =  f * np.cos(theta + phi)
         return np.array([
             vx,
-            (f / M) * np.sin(theta + phi),
+            fx / M,
             vy,
-            (f / M) * np.cos(theta + phi) - g,
+            fy / M - g,
             omega,
-            -(l * f * np.sin(phi)) / J,
+            -l * f * np.sin(phi) / (2 * J),
         ])
 
     return (F,)
@@ -350,11 +359,14 @@ def _(mo):
 @app.cell
 def _(F, sci):
     def redstart_solve(t_span, y0, f_phi):
-        def fun(t, s):
+        def rhs(t, s):
             f, phi = f_phi(t, s)
             return F(s, f, phi)
-        result = sci.solve_ivp(fun, t_span, y0, dense_output=True)
-        return result["sol"]
+        result = sci.solve_ivp(
+            rhs, t_span, y0, dense_output=True,
+            rtol=1e-8, atol=1e-10, max_step=0.05,
+        )
+        return result.sol
 
     return (redstart_solve,)
 
@@ -376,13 +388,11 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    En chute libre ($f=0$) depuis $y(0) = 10$ m avec $\dot{y}(0) = 0$ :
+    Avec $y(0)=10$, $\dot y(0)=0$, $f=0$, on a $\ddot y = -g = -1$ donc $y(t) = 10 - t^2/2$. Le centre de masse croise $y = \ell = 2$ pour
 
-    $$y(t) = 10 - \frac{1}{2}g\,t^2$$
-
-    En posant $y(t^*) = \ell = 1$ :
-
-    $$t^* = \sqrt{18} = 3\sqrt{2} \approx 4{,}243 \text{ s}$$
+    $$
+    t = \sqrt{2(10-\ell)} = \sqrt{16} = 4\ \text{s}.
+    $$
     """)
     return
 
@@ -391,20 +401,23 @@ def _(mo):
 def _(l, np, plt, redstart_solve):
     def free_fall_example():
         t_span = [0.0, 5.0]
-        y0 = [0.0, 0.0, 10.0, 0.0, 0.0, 0.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, 0.0, 0.0]  # [x, vx, y, vy, theta, omega]
         def f_phi(t, y):
             return np.array([0.0, 0.0])
         sol = redstart_solve(t_span, y0, f_phi)
         t = np.linspace(t_span[0], t_span[1], 1000)
         y_t = sol(t)[2]
-        plt.plot(t, y_t, label=r"$y(t)$ (height in meters)")
-        plt.plot(t, l * np.ones_like(t), color="grey", ls="--", label=r"$y=\ell$")
-        plt.axvline(3*np.sqrt(2), color="red", ls=":", label=r"$t^*=3\sqrt{2}$")
-        plt.title("Free Fall")
-        plt.xlabel("time $t$")
-        plt.grid(True)
-        plt.legend()
-        return plt.gcf()
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(t, y_t, label=r"$y(t)$ (hauteur en mètres)")
+        ax.plot(t, l * np.ones_like(t), color="grey", ls="--", label=r"$y=\ell$")
+        ax.axvline(4.0, color="red", ls=":", label=r"$t = 4$ s (croisement théorique)")
+        ax.set_title("Chute libre")
+        ax.set_xlabel("temps $t$")
+        ax.grid(True)
+        ax.legend()
+        plt.show()
+
     free_fall_example()
     return
 

@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return
+    return np, sci
 
 
 @app.cell(hide_code=True)
@@ -133,7 +133,7 @@ def _():
     g = 1
     M = 1
     l = 2
-    return M, l
+    return M, g, l
 
 
 @app.cell(hide_code=True)
@@ -207,7 +207,7 @@ def _(mo):
 @app.cell
 def _(M, l):
     J = M * l**2 / 3
-    return
+    return (J,)
 
 
 @app.cell(hide_code=True)
@@ -216,6 +216,20 @@ def _(mo):
     ## 🧩 Tilt
 
     Give the ordinary differential equation that governs the evolution of the tilt angle $\theta$.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le réacteur applique une force à la base du booster, à une distance $\ell$ du centre de masse. Le couple résultant vaut :
+
+    $$J\ddot{\theta} = -\ell\, f\sin\phi$$
+
+    soit :
+
+    $$\ddot{\theta} = -\frac{\ell\, f\sin\phi}{J}$$
     """)
     return
 
@@ -238,6 +252,30 @@ def _(mo):
 
     $$
     \dot{s} = F(s, f, \phi).
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    L'espace d'état est de dimension $n = 6$. Le vecteur d'état est :
+
+    $$s = (x,\; v_x,\; y,\; v_y,\; \theta,\; \omega) \in \mathbb{R}^6$$
+
+    Le champ de vecteurs $F:\mathbb{R}^{8} \to \mathbb{R}^6$ tel que $\dot{s} = F(s, f, \phi)$ est :
+
+    $$
+    F(s, f, \phi) =
+    \begin{pmatrix}
+    v_x \\
+    \dfrac{f}{M}\sin(\theta+\phi) \\
+    v_y \\
+    \dfrac{f}{M}\cos(\theta+\phi) - g \\
+    \omega \\
+    -\dfrac{\ell\, f\sin\phi}{J}
+    \end{pmatrix}
     $$
     """)
     return
@@ -280,6 +318,26 @@ def _(mo):
     free_fall_example()
     ```
     """)
+    return
+
+
+@app.cell
+def _(J, M, g, l, np, sci):
+    def redstart_solve(t_span, y0, f_phi):
+        def fun(t, s):
+            x, vx, y, vy, theta, omega = s
+            f, phi = f_phi(t, s)
+            return [
+                vx,
+                (f / M) * np.sin(theta + phi),
+                vy,
+                (f / M) * np.cos(theta + phi) - g,
+                omega,
+                -(l * f * np.sin(phi)) / J,
+            ]
+        result = sci.solve_ivp(fun, t_span, y0, dense_output=True)
+        return result["sol"]
+
     return
 
 

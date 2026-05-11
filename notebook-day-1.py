@@ -197,17 +197,27 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Pour une tige uniforme de masse $M$ et de longueur totale $2\ell$ :
+    Pour une tige homogène de longueur $\ell$ et de masse $M$ tournant autour de son centre :
 
-    $$J = \frac{1}{12}M(2\ell)^2 = \frac{M\ell^2}{3}$$
+    $$
+    J = \frac{M \ell^2}{12}.
+    $$
+
+    Avec $M=1$ et $\ell=2$, on obtient $J = 1/3$.
     """)
     return
 
 
 @app.cell
 def _(M, l):
-    J = M * l**2 / 3
+    J = M * l**2 / 12
     return (J,)
+
+
+@app.cell
+def _(J):
+    J
+    return
 
 
 @app.cell(hide_code=True)

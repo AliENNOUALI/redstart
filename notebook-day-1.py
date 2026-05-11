@@ -843,7 +843,7 @@ def _(booster_anim, redstart_solve, world):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Chute libre
+    **Scénario 1 — Chute libre.** Réacteur éteint ($f=0$). Le booster part de $y=10$ m, à l'arrêt et bien droit. Seule la gravité agit : il tombe verticalement et accélère uniformément ($\ddot y = -g$). On vérifie visuellement que le centre de masse atteint $y=\ell=2$ aux alentours de $t=4$ s.
     """)
     return
 
@@ -858,7 +858,7 @@ def _(mo, np, simulate_and_anim, y0_default):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Equilibre vertical
+    **Scénario 2 — Vol stationnaire.** Poussée $f = Mg$ exactement compensant le poids, alignée avec l'axe ($\phi=0$). La résultante des forces est nulle : le booster reste **immobile** à $y=10$ m, flamme stable de longueur $\ell/2$. C'est le point d'équilibre vertical du système.
     """)
     return
 
@@ -873,7 +873,7 @@ def _(M, g, mo, np, simulate_and_anim, y0_default):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    f = Mg , phi = pi/8
+    **Scénario 3 — Poussée désaxée.** Même amplitude $f=Mg$ mais $\phi = \pi/8$ : la poussée n'est plus alignée avec l'axe du booster. Sa composante axiale est insuffisante pour compenser $g$, et son **bras de levier** crée un couple non nul ($J\ddot\theta = -\tfrac{\ell f}{2}\sin\phi$). Le booster **bascule** tout en dérivant horizontalement — illustration directe du couplage rotation/translation.
     """)
     return
 
@@ -892,7 +892,7 @@ def _(M, g, mo, np, simulate_and_anim, y0_default):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Atterissage contrôlé
+    **Scénario 4 — Atterrissage contrôlé.** On applique la commande $f(t) = -1.96 + 1.344\,t$ déterminée plus haut, avec l'état initial $(y,\dot y) = (10, -2)$. Le booster décélère puis se pose précisément à $y(5) = \ell/2 = 1$ avec une vitesse nulle, sur la cible verte. La flamme grossit au fur et à mesure que la poussée augmente — phase de freinage final juste avant le contact.
     """)
     return
 

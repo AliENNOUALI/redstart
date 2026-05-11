@@ -71,7 +71,7 @@ def _():
     import numpy as np
     import numpy.linalg as la
 
-    return (np,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -133,7 +133,7 @@ def _():
     g = 1
     M = 1
     l = 2
-    return
+    return M, l
 
 
 @app.cell(hide_code=True)
@@ -146,10 +146,15 @@ def _(mo):
     return
 
 
-@app.cell
-def _(f, np, phi, theta):
-    fx = -f * np.sin(theta + phi)
-    fy =  f * np.cos(theta + phi)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le réacteur est situé à la base du booster. L'axe du booster fait un angle $\theta$ avec la verticale. La force $f$ fait un angle $\phi$ avec l'axe du booster.
+
+    Les coordonnées cartésiennes de la force sont :
+
+    $$f_x = f \sin(\theta + \phi), \qquad f_y = f \cos(\theta + \phi)$$
+    """)
     return
 
 
@@ -166,10 +171,42 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On applique la deuxième loi de Newton $M\ddot{\vec{r}} = \vec{F}$ :
+
+    $$M\ddot{x} = f\sin(\theta + \phi)$$
+
+    $$M\ddot{y} = f\cos(\theta + \phi) - Mg$$
+
+    ce qui donne :
+
+    $$\ddot{x} = \frac{f}{M}\sin(\theta+\phi), \qquad \ddot{y} = \frac{f}{M}\cos(\theta+\phi) - g$$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Moment of inertia
 
     Compute the [moment of inertia](https://en.wikipedia.org/wiki/Moment_of_inertia) $J$ of the booster and define the corresponding Python variable `J`.
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Pour une tige uniforme de masse $M$ et de longueur totale $2\ell$ :
+
+    $$J = \frac{1}{12}M(2\ell)^2 = \frac{M\ell^2}{3}$$
+    """)
+    return
+
+
+@app.cell
+def _(M, l):
+    J = M * l**2 / 3
     return
 
 

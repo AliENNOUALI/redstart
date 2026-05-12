@@ -1249,6 +1249,20 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On calcule explicitement les colonnes de $\mathcal{C} = \begin{bmatrix} B & AB & A^2B & A^3B & A^4B & A^5B \end{bmatrix}$ :
+
+    $$B = \begin{bmatrix} 0 & 0 \\ 0 & -g \\ 0 & 0 \\ \frac{1}{M} & 0 \\ 0 & 0 \\ 0 & -3 \end{bmatrix}, \quad AB = \begin{bmatrix} 0 & -g \\ 0 & 0 \\ \frac{1}{M} & 0 \\ 0 & 0 \\ 0 & -3 \\ 0 & 0 \end{bmatrix}, \quad A^2B = \begin{bmatrix} 0 & 0 \\ \frac{1}{M} & 0 \\ 0 & 0 \\ 0 & 0 \\ 0 & 0 \\ 0 & 0 \end{bmatrix}$$
+
+    $$A^3B = \begin{bmatrix} \frac{1}{M} & 0 \\ 0 & 0 \\ 0 & 0 \\ 0 & 0 \\ 0 & 0 \\ 0 & 0 \end{bmatrix}, \quad A^4B = 0, \quad A^5B = 0$$
+
+    La matrice $\mathcal{C} \in \mathbb{R}^{6 \times 12}$ est de rang $6$ : les colonnes couvrent tout $\mathbb{R}^6$, le système est donc **commandable**.
+    """)
+    return
+
+
 @app.cell
 def _(A, B, np):
     def controllability_matrix(A, B):
@@ -1297,6 +1311,18 @@ def _(mo):
     $$A_{lat} = \begin{bmatrix} 0 & 1 & 0 & 0 \\ 0 & 0 & -g & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 \end{bmatrix}, \qquad B_{lat} = \begin{bmatrix} 0 \\ -g \\ 0 \\ -\frac{Mg\ell}{2J} \end{bmatrix}$$
 
     Le système réduit est commandable si et seulement si la matrice de commandabilité $\mathcal{C}_{lat} = \begin{bmatrix} B_{lat} & A_{lat}B_{lat} & A_{lat}^2B_{lat} & A_{lat}^3B_{lat} \end{bmatrix}$ est de rang 4.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On calcule explicitement les colonnes de $\mathcal{C}_{lat} = \begin{bmatrix} B_{lat} & A_{lat}B_{lat} & A_{lat}^2B_{lat} & A_{lat}^3B_{lat} \end{bmatrix}$ :
+
+    $$B_{lat} = \begin{bmatrix} 0 \\ -g \\ 0 \\ -3 \end{bmatrix}, \quad A_{lat}B_{lat} = \begin{bmatrix} -g \\ 0 \\ -3 \\ 0 \end{bmatrix}, \quad A_{lat}^2B_{lat} = \begin{bmatrix} 0 \\ 3g \\ 0 \\ 0 \end{bmatrix}, \quad A_{lat}^3B_{lat} = \begin{bmatrix} 3g \\ 0 \\ 0 \\ 0 \end{bmatrix}$$
+
+    La matrice $\mathcal{C}_{lat} \in \mathbb{R}^{4 \times 4}$ est de rang $4$ : elle est inversible, le système latéral réduit est donc **commandable**.
     """)
     return
 
@@ -1497,7 +1523,7 @@ def _(A_lat, B_lat, np, plt, scipy):
     ts, S, Dphi, A_cl = closed_loop_lateral(K_manual, s0)
     plot_lateral(ts, S, Dphi, f"Contrôleur manuel (p={p})")
     print("Valeurs propres en boucle fermée :", np.round(np.linalg.eigvals(A_cl), 4))
-    return
+    return closed_loop_lateral, plot_lateral, s0
 
 
 @app.cell(hide_code=True)
@@ -1543,6 +1569,43 @@ def _(mo):
     - make $\Delta x(t) \to 0$ in approximately $20$ sec (or less).
 
     Explain how you find the proper design parameters!
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On utilise maintenant les quatre gains du retour d'état. La dynamique en boucle fermée est $\Delta\dot{s}_L = (A_L - B_L K_{pp})\Delta s_L$. Le temps de stabilisation d'un mode de pôle $-\lambda$ est approximativement $4/\lambda$ (critère à 2%), donc pour $t_s \approx 20$ s on veut que la partie réelle de tous les pôles soit $\lesssim -0.3$.
+
+    On doit aussi maintenir $|\Delta\phi| < \pi/2$ : des pôles trop rapides amplifient l'effort de commande initial. On vise donc des pôles **modérés** — assez lents pour garder la commande petite, assez rapides pour converger en $\approx 20$ s. Un bon premier essai : écarter légèrement les quatre pôles autour de $-0.5$ (en évitant les multiplicités pour `place_poles`), par exemple $\{-0.4,\ -0.5,\ -0.6,\ -0.7\}$.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, closed_loop_lateral, np, plot_lateral, s0, scipy):
+    desired_poles = np.array([-0.4, -0.5, -0.6, -0.7])
+    place_res = scipy.signal.place_poles(A_lat, B_lat, desired_poles)
+    K_pp = place_res.gain_matrix
+    print("K_pp =", K_pp)
+    print("Pôles souhaités :", desired_poles)
+    print("Pôles obtenus   :", np.round(np.linalg.eigvals(A_lat - B_lat @ K_pp), 4))
+
+    ts_pp, S_pp, Dphi_pp, A_cl_pp = closed_loop_lateral(K_pp.ravel(), s0, t_span=(0.0, 30.0))
+    plot_lateral(ts_pp, S_pp, Dphi_pp, "Contrôleur par placement de pôles $K_{pp}$")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Les quatre valeurs propres sont strictement dans le demi-plan gauche : la boucle fermée est **asymptotiquement stable**. On vérifie sur les graphes que $|\Delta\theta|$ et $|\Delta\phi|$ restent bien en dessous de $\pi/2$, et que $\Delta x$ converge vers $0$ en environ 20 s.
+
+    **Règles de réglage utilisées.**
+    - Des pôles réels évitent les oscillations (utile car $\Delta\phi$ doit rester petit).
+    - Écarter légèrement les pôles améliore le conditionnement numérique de `place_poles` et évite une réponse raide.
+    - Un rapport 2x entre le pôle le plus rapide et le plus lent équilibre la régulation de $x$ (modes lents) et la régulation de $\theta$ (modes rapides).
     """)
     return
 

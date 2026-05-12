@@ -1165,6 +1165,43 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On pose le vecteur d'état $z = (\Delta x,\ \Delta\dot{x},\ \Delta y,\ \Delta\dot{y},\ \Delta\theta,\ \Delta\dot{\theta})^\top$ et le vecteur de contrôle $u = (\Delta f,\ \Delta\phi)^\top$.
+
+    Le système linéarisé s'écrit $\dot{z} = Az + Bu$ avec :
+
+    $$A = \begin{bmatrix} 0 & 1 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & -g & 0 \\ 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}, \qquad B = \begin{bmatrix} 0 & 0 \\ 0 & -g \\ 0 & 0 \\ \frac{1}{M} & 0 \\ 0 & 0 \\ 0 & -\frac{Mg\ell}{2J} \end{bmatrix}$$
+    """)
+    return
+
+
+@app.cell
+def _(J, M, g, l, np):
+    A = np.array([
+        [0.0, 1.0, 0.0, 0.0,  0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0,  -g , 0.0],
+        [0.0, 0.0, 0.0, 1.0,  0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0,  0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0,  0.0, 1.0],
+        [0.0, 0.0, 0.0, 0.0,  0.0, 0.0],
+    ])
+
+    B = np.array([
+        [0.0,        0.0       ],
+        [0.0,        -g        ],
+        [0.0,        0.0       ],
+        [1.0 / M,    0.0       ],
+        [0.0,        0.0       ],
+        [0.0,        -M*g*l/(2*J)],
+    ])
+
+    print("A =\n", A)
+    print("\nB =\n", B)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Stability
 
     Is the generic equilibrium asymptotically stable?

@@ -1259,7 +1259,9 @@ def _(A, B, np):
         return np.hstack(cols)
 
     C = controllability_matrix(A, B)
-    print(np.linalg.matrix_rank(C))
+    print("Matrice de commandabilité C :")
+    print(C)
+    print("Rang :", np.linalg.matrix_rank(C))
     return (controllability_matrix,)
 
 
@@ -1316,8 +1318,10 @@ def _(J, M, controllability_matrix, g, l, np):
     ])
 
     C_lat = controllability_matrix(A_lat, B_lat)
-    print(np.linalg.matrix_rank(C_lat))
-    return
+    print("Matrice de commandabilité C_lat :")
+    print(C_lat)
+    print("Rang :", np.linalg.matrix_rank(C_lat))
+    return (A_lat,)
 
 
 @app.cell(hide_code=True)
@@ -1338,6 +1342,48 @@ def _(mo):
     - $\phi(t)=0$ at all times.
 
     What do you see? How do you explain it?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On simule le modèle linéarisé latéral avec les conditions initiales $\Delta x(0) = 0$, $\Delta\dot{x}(0) = 0$, $\Delta\theta(0) = \pi/4$, $\Delta\dot{\theta}(0) = 0$, et $\Delta\phi(t) = 0$ pour tout $t$.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, np, plt):
+    from scipy.integrate import solve_ivp
+
+    z0 = [0, 0, np.pi/4, 0]
+    t_span = [0, 10]
+    t_eval = np.linspace(*t_span, 1000)
+
+    sol = solve_ivp(lambda t, z: A_lat @ z, t_span, z0, t_eval=t_eval)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    ax1.plot(sol.t, sol.y[0])
+    ax1.set_title(r"$\Delta x(t)$")
+    ax1.set_xlabel("temps $t$")
+    ax1.grid(True)
+
+    ax2.plot(sol.t, sol.y[2])
+    ax2.set_title(r"$\Delta\theta(t)$")
+    ax2.set_xlabel("temps $t$")
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On observe que $\Delta\theta(t)$ reste constant égal à $\pi/4$ : sans contrôle, aucun couple n'est exercé sur le booster et il reste incliné. En conséquence, $\Delta x(t)$ dérive quadratiquement selon $\Delta x(t) = -\frac{g\pi}{8}t^2$ : le booster part latéralement sans jamais se redresser.
     """)
     return
 

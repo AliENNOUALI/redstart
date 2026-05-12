@@ -1196,7 +1196,7 @@ def _(J, M, g, l, np):
 
     print("A =\n", A)
     print("\nB =\n", B)
-    return
+    return (A,)
 
 
 @app.cell(hide_code=True)
@@ -1206,6 +1206,24 @@ def _(mo):
 
     Is the generic equilibrium asymptotically stable?
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Pour déterminer la stabilité, on calcule les valeurs propres de $A$. Un équilibre est asymptotiquement stable si et seulement si toutes les valeurs propres de $A$ ont une partie réelle strictement négative.
+
+    Or $A$ est une matrice triangulaire par blocs avec des zéros sur la diagonale, donc toutes ses valeurs propres sont $\lambda = 0$.
+
+    L'équilibre n'est donc **pas asymptotiquement stable**.
+    """)
+    return
+
+
+@app.cell
+def _(A, np):
+    print(np.linalg.eigvals(A))
     return
 
 

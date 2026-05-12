@@ -1087,6 +1087,30 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    À l'équilibre, toutes les dérivées sont nulles. On pose $\dot{s} = F(s, f, \phi) = 0$, ce qui donne le système :
+
+    $$v_x = 0, \quad v_y = 0, \quad \omega = 0$$
+
+    $$(1)-\frac{f}{M}\sin(\theta + \phi) = 0,(2) \quad \frac{f}{M}\cos(\theta + \phi) - g = 0,(3)\quad -\frac{f}{J}\frac{\ell}{2}\sin\phi = 0$$
+
+    L'équation (3) donne $\sin\phi = 0$, et comme $|\phi| < \pi/2$, on conclut $\phi = 0$.
+
+    En substituant dans l'équation (1), on obtient $\sin\theta = 0$, et comme $|\theta| < \pi/2$, on conclut $\theta = 0$.
+
+    Enfin, l'équation (2) donne $f = Mg$.
+
+    Les positions $x$ et $y$ restent libres. Les équilibres sont donc tous les états :
+
+    $$(x_e,\ 0,\ y_e,\ 0,\ 0,\ 0), \quad x_e, y_e \in \mathbb{R}$$
+
+    avec les entrées $f = Mg$ et $\phi = 0$, le booster est vertical, immobile, et la poussée compense exactement la gravité.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Linearized Model
 
     Introduce the error variables $\Delta x$, $\Delta y$, $\Delta \theta$, and $\Delta f$ and $\Delta \phi$ of the state and input values with respect to the generic equilibrium configuration.

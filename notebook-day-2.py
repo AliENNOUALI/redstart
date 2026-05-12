@@ -1196,7 +1196,7 @@ def _(J, M, g, l, np):
 
     print("A =\n", A)
     print("\nB =\n", B)
-    return (A,)
+    return A, B
 
 
 @app.cell(hide_code=True)
@@ -1233,6 +1233,40 @@ def _(mo):
     ## 🧩 Controllability
 
     Is the linearized model controllable?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Un système $\dot{z} = Az + Bu$ est commandable si et seulement si la matrice de commandabilité
+
+    $$\mathcal{C} = \begin{bmatrix} B & AB & A^2B & \cdots & A^{n-1}B \end{bmatrix}$$
+
+    est de rang plein (rang $= 6$ ici).
+    """)
+    return
+
+
+@app.cell
+def _(A, B, np):
+    def controllability_matrix(A, B):
+        n = A.shape[0]
+        cols = [B]
+        for i in range(1, n):
+            cols.append(A @ cols[-1])
+        return np.hstack(cols)
+
+    C = controllability_matrix(A, B)
+    print(np.linalg.matrix_rank(C))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Donc le système est bien commandable.
     """)
     return
 

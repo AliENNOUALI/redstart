@@ -1122,6 +1122,38 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On se place au voisinage de l'équilibre générique $(x_e, 0, y_e, 0, 0, 0)$ avec $f = Mg$ et $\phi = 0$. On introduit les variables d'erreur :
+
+    $$\Delta x = x - x_e, \quad \Delta y = y - y_e, \quad \Delta\theta = \theta, \quad \Delta f = f - Mg, \quad \Delta\phi = \phi$$
+
+    On linéarise les équations du mouvement au premier ordre autour de l'équilibre.
+
+    **Translation horizontale :** $M\ddot{x} = -f\sin(\theta + \phi)$
+
+    Au premier ordre, $\sin(\Delta\theta + \Delta\phi) \approx \Delta\theta + \Delta\phi$, donc :
+
+    $$\Delta\ddot{x} = -g(\Delta\theta + \Delta\phi)$$
+
+    **Translation verticale :** $M\ddot{y} = f\cos(\theta + \phi) - Mg$
+
+    Au premier ordre, $\cos(\Delta\theta + \Delta\phi) \approx 1$, donc :
+
+    $$\Delta\ddot{y} = \frac{\Delta f}{M}$$
+
+    **Rotation :** $J\ddot{\theta} = -f\frac{\ell}{2}\sin\phi$
+
+    Au premier ordre, $\sin(\Delta\phi) \approx \Delta\phi$, donc :
+
+    $$\Delta\ddot{\theta} = -\frac{Mg\ell}{2J}\,\Delta\phi$$
+
+    On remarque que la dynamique verticale (gouvernée par $\Delta f$) est **découplée** de la dynamique latérale et angulaire (gouvernées par $\Delta\phi$).
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Standard Form
 
     1. What are the matrices $A$ and $B$ associated to this linear model in standard form?

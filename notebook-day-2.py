@@ -1216,7 +1216,7 @@ def _(mo):
 
     Or $A$ est une matrice triangulaire par blocs avec des zéros sur la diagonale, donc toutes ses valeurs propres sont $\lambda = 0$.
 
-    L'équilibre n'est donc **pas asymptotiquement stable**.
+    L'équilibre n'est donc pas asymptotiquement stable, mais **marginalement stable** : toutes les valeurs propres sont nulles (partie réelle nulle), et la matrice $A$ est nilpotente ($A^3 = 0$). Les solutions restent donc bornées mais ne convergent pas vers zéro.
     """)
     return
 
@@ -1321,7 +1321,7 @@ def _(J, M, controllability_matrix, g, l, np):
     print("Matrice de commandabilité C_lat :")
     print(C_lat)
     print("Rang :", np.linalg.matrix_rank(C_lat))
-    return (A_lat,)
+    return A_lat, B_lat
 
 
 @app.cell(hide_code=True)
@@ -1425,6 +1425,85 @@ def _(mo):
     Explain your thought process, show your iterative guesses and simulations!
 
     Is your final closed-loop model asymptotically stable?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Les deux premières entrées de $K$ étant nulles, le sous-système angulaire se découple de $(\Delta x, \Delta\dot{x})$ :
+
+    $$\Delta\ddot{\theta} = -\frac{6g}{\ell}\Delta\phi = \frac{6g}{\ell}(k_3\Delta\theta + k_4\Delta\dot{\theta})$$
+
+    En réécrivant sous la forme d'un oscillateur du second ordre $\ddot{\theta} + 2\zeta\omega_n\dot{\theta} + \omega_n^2\theta = 0$ avec $\omega_n^2 = -(6g/\ell)k_3$ et $2\zeta\omega_n = -(6g/\ell)k_4$, on obtient la condition nécessaire :
+
+    $$k_3 < 0, \qquad k_4 < 0$$
+
+    En plaçant un pôle double réel en $\lambda = -p$ (amortissement critique), le polynôme caractéristique $\lambda^2 + 2p\lambda + p^2 = 0$ donne :
+
+    $$k_3 = -\frac{p^2\ell}{6g}, \qquad k_4 = -\frac{p\ell}{3g}$$
+
+    Avec $g=1$ et $\ell=2$, cela se simplifie en $k_3 = -p^2/3$ et $k_4 = -2p/3$. Le temps de stabilisation d'un système du second ordre à amortissement critique est approximativement $t_s \approx 5.8/p$ (critère à 1%). Pour $t_s \lesssim 20$ s, il faut $p \gtrsim 0.3$. On doit aussi vérifier $|\Delta\phi(0)| < \pi/2$ :
+
+    $$|\Delta\phi(0)| = |k_3|\frac{\pi}{4} = \frac{p^2}{12}\pi$$
+
+    ce qui impose $p < \sqrt{6} \approx 2.45$. Un bon compromis est $p = 0.5$.
+
+    **Réglage itératif.** On teste trois valeurs de $p$ (0.3, 0.5, 1.0) et on compare. On retient celle qui satisfait toutes les contraintes confortablement.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, np, plt, scipy):
+    def closed_loop_lateral(K, s0, t_span=(0.0, 25.0), n=600):
+        K = np.asarray(K).reshape(1, -1)
+        A_cl = A_lat - B_lat @ K
+        def rhs(t, s):
+            return A_cl @ s
+        ts = np.linspace(*t_span, n)
+        sol = scipy.integrate.solve_ivp(rhs, t_span, s0, t_eval=ts, rtol=1e-9, atol=1e-12)
+        Dphi = -(K @ sol.y).ravel()
+        return ts, sol.y, Dphi, A_cl
+
+    def plot_lateral(ts, S, Dphi, title):
+        Dx, Dvx, Dth, Dom = S
+        fig, axes = plt.subplots(2, 2, figsize=(11, 7))
+        axes[0,0].plot(ts, Dth);  axes[0,0].set_title(r"$\Delta\theta(t)$");  axes[0,0].grid(True)
+        axes[0,0].axhline(np.pi/2, color='r', ls=':'); axes[0,0].axhline(-np.pi/2, color='r', ls=':')
+        axes[0,1].plot(ts, Dphi); axes[0,1].set_title(r"$\Delta\phi(t)$");    axes[0,1].grid(True)
+        axes[0,1].axhline(np.pi/2, color='r', ls=':'); axes[0,1].axhline(-np.pi/2, color='r', ls=':')
+        axes[1,0].plot(ts, Dx);   axes[1,0].set_title(r"$\Delta x(t)$");      axes[1,0].grid(True)
+        axes[1,1].plot(ts, Dvx);  axes[1,1].set_title(r"$\Delta\dot{x}(t)$"); axes[1,1].grid(True)
+        fig.suptitle(title); plt.tight_layout(); plt.show()
+
+    s0 = np.array([0.0, 0.0, np.pi/4, 0.0])
+
+    for p in [0.3, 0.5, 1.0]:
+        k3 = -p**2 / 3
+        k4 = -2*p / 3
+        K = np.array([0.0, 0.0, k3, k4])
+        ts, S, Dphi, A_cl = closed_loop_lateral(K, s0)
+        eig = np.linalg.eigvals(A_cl)
+        Dth = S[2]
+        settle = ts[np.where(np.abs(Dth) > 0.01*np.pi/4)[0][-1]] if np.any(np.abs(Dth) > 0.01*np.pi/4) else 0.0
+        print(f"p={p}: K=[0,0,{k3:.4f},{k4:.4f}], eig(A_cl)={np.round(eig,3)}, settle(1%) ~ {settle:.2f}s, max|Dphi|={np.max(np.abs(Dphi)):.4f}")
+
+    p = 0.5
+    k3 = -p**2 / 3
+    k4 = -2*p / 3
+    K_manual = np.array([0.0, 0.0, k3, k4])
+    ts, S, Dphi, A_cl = closed_loop_lateral(K_manual, s0)
+    plot_lateral(ts, S, Dphi, f"Contrôleur manuel (p={p})")
+    print("Valeurs propres en boucle fermée :", np.round(np.linalg.eigvals(A_cl), 4))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Stabilité asymptotique de la boucle fermée :** La matrice de boucle fermée $A_L - B_L K_\text{manuel}$ a pour valeurs propres $\{0, 0, -0.5, -0.5\}$ : les modes $(\Delta\theta, \Delta\dot{\theta})$ sont amortis en $-p$, mais la chaîne $(\Delta x, \Delta\dot{x})$ conserve deux valeurs propres nulles (on n'utilise pas $\Delta x$ ni $\Delta\dot{x}$ dans le retour d'état). La boucle fermée n'est donc **pas asymptotiquement stable** — ce qui est exactement attendu puisque la spécification autorise explicitement la dérive de $\Delta x$.
     """)
     return
 

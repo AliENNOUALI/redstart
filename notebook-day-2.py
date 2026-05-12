@@ -1260,7 +1260,7 @@ def _(A, B, np):
 
     C = controllability_matrix(A, B)
     print(np.linalg.matrix_rank(C))
-    return
+    return (controllability_matrix,)
 
 
 @app.cell(hide_code=True)
@@ -1281,6 +1281,49 @@ def _(mo):
     - What are the new (reduced) matrices $A$ and $B$ for this reduced system?
 
     - Check the controllability of this new system.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On se restreint aux variables latérales $(\Delta x,\ \Delta\dot{x},\ \Delta\theta,\ \Delta\dot{\theta})$, on fixe $f = Mg$ (donc $\Delta f = 0$) et on contrôle uniquement avec $\Delta\phi$.
+
+    En extrayant les lignes et colonnes correspondantes de $A$ et $B$ :
+
+    $$A_{lat} = \begin{bmatrix} 0 & 1 & 0 & 0 \\ 0 & 0 & -g & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 \end{bmatrix}, \qquad B_{lat} = \begin{bmatrix} 0 \\ -g \\ 0 \\ -\frac{Mg\ell}{2J} \end{bmatrix}$$
+
+    Le système réduit est commandable si et seulement si la matrice de commandabilité $\mathcal{C}_{lat} = \begin{bmatrix} B_{lat} & A_{lat}B_{lat} & A_{lat}^2B_{lat} & A_{lat}^3B_{lat} \end{bmatrix}$ est de rang 4.
+    """)
+    return
+
+
+@app.cell
+def _(J, M, controllability_matrix, g, l, np):
+    A_lat = np.array([
+        [0, 1,  0, 0],
+        [0, 0, -g, 0],
+        [0, 0,  0, 1],
+        [0, 0,  0, 0]
+    ])
+
+    B_lat = np.array([
+        [0],
+        [-g],
+        [0],
+        [-M*g*l/(2*J)]
+    ])
+
+    C_lat = controllability_matrix(A_lat, B_lat)
+    print(np.linalg.matrix_rank(C_lat))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Le rang vaut $4$, le système latéral réduit est donc commandable.
     """)
     return
 

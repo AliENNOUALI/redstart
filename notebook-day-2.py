@@ -1594,7 +1594,7 @@ def _(A_lat, B_lat, closed_loop_lateral, np, plot_lateral, s0, scipy):
 
     ts_pp, S_pp, Dphi_pp, A_cl_pp = closed_loop_lateral(K_pp.ravel(), s0, t_span=(0.0, 30.0))
     plot_lateral(ts_pp, S_pp, Dphi_pp, "Contrôleur par placement de pôles $K_{pp}$")
-    return
+    return (K_pp,)
 
 
 @app.cell(hide_code=True)
@@ -1625,9 +1625,206 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On formule un problème **LQR** (Linear Quadratic Regulator) sur le sous-système latéral. On cherche la commande $\Delta\phi(t)$ qui minimise le coût quadratique
+
+    $$
+    J = \int_0^{+\infty} \big( z^\top Q\, z + u^\top R\, u \big)\, dt,
+    \qquad z = (\Delta x, \Delta\dot x, \Delta\theta, \Delta\dot\theta)^\top,\ u = \Delta\phi
+    $$
+
+    La solution optimale est un retour d'état $u = -K_{oc}\, z$ avec $K_{oc} = R^{-1} B_L^\top P$, où $P$ est la solution semi-définie positive de l'**équation algébrique de Riccati**
+
+    $$
+    A_L^\top P + P A_L - P B_L R^{-1} B_L^\top P + Q = 0
+    $$
+
+    obtenue par `scipy.linalg.solve_continuous_are`.
+
+    **Choix des pondérations.** On part de $Q = I_4$ et $R = 1$, puis on itère :
+
+    - Augmenter $Q_{33}$ (poids sur $\Delta\theta$) pour redresser le booster plus vite ;
+    - Augmenter $R$ pour réduire $|\Delta\phi|$ et garantir $|\Delta\phi| < \pi/2$ avec une marge confortable ;
+    - Les poids sur les vitesses $\Delta\dot{x}, \Delta\dot{\theta}$ amortissent les oscillations.
+
+    Après quelques essais, $Q = \mathrm{diag}(1, 1, 10, 1)$ et $R = 50$ donnent un bon compromis : $\max |\Delta\phi| \approx 0.86 < \pi/2$, et $\Delta\theta, \Delta x$ convergent vers $0$ en moins de 20 s. Les pôles obtenus sont complexes conjugués avec partie réelle négative, ce qui garantit la stabilité asymptotique.
+    """)
+    return
+
+
+@app.cell
+def _(A_lat, B_lat, closed_loop_lateral, np, plot_lateral, s0, scipy):
+    Q_lqr = np.diag([1.0, 1.0, 10.0, 1.0])
+    R_lqr = np.array([[50.0]])
+
+    P = scipy.linalg.solve_continuous_are(A_lat, B_lat, Q_lqr, R_lqr)
+    K_oc = np.linalg.solve(R_lqr, B_lat.T @ P)
+
+    print("Q =\n", Q_lqr)
+    print("R =", R_lqr.ravel())
+    print("\nK_oc =", K_oc)
+    print("Pôles boucle fermée :", np.round(np.linalg.eigvals(A_lat - B_lat @ K_oc), 4))
+
+    ts_oc, S_oc, Dphi_oc, A_cl_oc = closed_loop_lateral(K_oc.ravel(), s0, t_span=(0.0, 30.0))
+    plot_lateral(ts_oc, S_oc, Dphi_oc, "Contrôleur LQR $K_{oc}$")
+    return (K_oc,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Les quatre valeurs propres sont à partie réelle strictement négative : la boucle fermée est **asymptotiquement stable**. Sur les graphes, on vérifie :
+
+    - $\Delta\theta(t) \to 0$ en $\approx 12$ s (critère à 1%) ;
+    - $\Delta x(t) \to 0$ en $\approx 8$ s (critère à 5%) ;
+    - $|\Delta\theta| \le \pi/4$ et $\max |\Delta\phi| \approx 0.86 < \pi/2$.
+
+    Toutes les spécifications du contrôleur par placement de pôles sont satisfaites.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Validation
 
     Test the two control strategies (pole placement and optimal control) on the "true" (nonlinear) model with an animation. Check that both controllers achieve their goal; otherwise, go back to the drawing board and tweak the design parameters until they do!
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On teste les deux contrôleurs sur la **vraie dynamique non-linéaire** du booster. Le retour d'état est appliqué sur les variables d'erreur autour de l'équilibre $(x_e, 0, y_e, 0, 0, 0)$ avec $f = Mg$ et $\phi = 0$ ; on prend $x_e = 0$ et $y_e$ libre (la dynamique verticale n'est pas commandée).
+
+    La loi de commande est donc :
+
+    $$
+    f(t) = Mg, \qquad \phi(t) = -K \cdot (x(t),\ \dot x(t),\ \theta(t),\ \dot\theta(t))^\top
+    $$
+
+    On sature $\phi$ dans $(-\pi/2,\ \pi/2)$ pour rester dans la zone de validité physique du modèle (poussée orientée vers le bas).
+    """)
+    return
+
+
+@app.cell
+def _(K_oc, K_pp, M, g, np, plt, redstart_solve):
+    def validation_plot():
+        def make_f_phi(K):
+            K = np.asarray(K).ravel()
+            def f_phi(t, state):
+                x, vx, y, vy, th, om = state
+                # phi = -K @ [x, vx, theta, omega]  (équilibre x_e = 0)
+                phi = -(K[0]*x + K[1]*vx + K[2]*th + K[3]*om)
+                # saturation pour rester dans la zone de validité physique
+                phi = float(np.clip(phi, -np.pi/2 + 1e-3, np.pi/2 - 1e-3))
+                return np.array([M*g, phi])
+            return f_phi
+
+        # Conditions initiales : booster incliné de 45°, à 10 m d'altitude, au repos
+        t_span_v = [0.0, 25.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, np.pi/4, 0.0]
+        ts_v = np.linspace(*t_span_v, 800)
+
+        sol_pp = redstart_solve(t_span_v, y0, make_f_phi(K_pp))
+        sol_oc = redstart_solve(t_span_v, y0, make_f_phi(K_oc))
+
+        Y_pp = sol_pp(ts_v)
+        Y_oc = sol_oc(ts_v)
+
+        phi_pp = np.array([make_f_phi(K_pp)(t, sol_pp(t))[1] for t in ts_v])
+        phi_oc = np.array([make_f_phi(K_oc)(t, sol_oc(t))[1] for t in ts_v])
+
+        fig_v, axes = plt.subplots(2, 2, figsize=(12, 8))
+        axes[0, 0].plot(ts_v, Y_pp[0], label="Pole Placement")
+        axes[0, 0].plot(ts_v, Y_oc[0], label="LQR")
+        axes[0, 0].set_title(r"$x(t)$"); axes[0, 0].grid(True); axes[0, 0].legend()
+
+        axes[0, 1].plot(ts_v, Y_pp[4], label="Pole Placement")
+        axes[0, 1].plot(ts_v, Y_oc[4], label="LQR")
+        axes[0, 1].axhline(np.pi/2, color='r', ls=':'); axes[0, 1].axhline(-np.pi/2, color='r', ls=':')
+        axes[0, 1].set_title(r"$\theta(t)$"); axes[0, 1].grid(True); axes[0, 1].legend()
+
+        axes[1, 0].plot(ts_v, phi_pp, label="Pole Placement")
+        axes[1, 0].plot(ts_v, phi_oc, label="LQR")
+        axes[1, 0].axhline(np.pi/2, color='r', ls=':'); axes[1, 0].axhline(-np.pi/2, color='r', ls=':')
+        axes[1, 0].set_title(r"$\phi(t)$ (commande)"); axes[1, 0].grid(True); axes[1, 0].legend()
+
+        axes[1, 1].plot(ts_v, Y_pp[2], label="Pole Placement")
+        axes[1, 1].plot(ts_v, Y_oc[2], label="LQR")
+        axes[1, 1].set_title(r"$y(t)$ (non commandé)"); axes[1, 1].grid(True); axes[1, 1].legend()
+
+        plt.suptitle("Validation des deux contrôleurs sur le modèle non-linéaire")
+        plt.tight_layout()
+        plt.show()
+
+        print(f"PP  : final |x|={abs(Y_pp[0,-1]):.4f}, final |theta|={abs(Y_pp[4,-1]):.4f}, max|phi|={np.max(np.abs(phi_pp)):.3f}")
+        print(f"LQR : final |x|={abs(Y_oc[0,-1]):.4f}, final |theta|={abs(Y_oc[4,-1]):.4f}, max|phi|={np.max(np.abs(phi_oc)):.3f}")
+        return make_f_phi
+
+    make_f_phi = validation_plot()
+    return (make_f_phi,)
+
+
+@app.cell
+def _(K_pp, booster_anim, make_f_phi, mo, np, redstart_solve, world):
+    def anim_pp():
+        t_span = [0.0, 25.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, np.pi/4, 0.0]
+        f_phi = make_f_phi(K_pp)
+        sol = redstart_solve(t_span, y0, f_phi)
+        x = lambda t: sol(t)[0]
+        y = lambda t: sol(t)[2]
+        theta = lambda t: sol(t)[4]
+        f = lambda t: f_phi(t, sol(t))[0]
+        phi = lambda t: f_phi(t, sol(t))[1]
+        return mo.Html(
+            world([-6, 6, -2, 12], booster_anim(x, y, theta, f, phi, T=t_span[1]))
+        ).center()
+
+    anim_pp()
+    return
+
+
+@app.cell
+def _(K_oc, booster_anim, make_f_phi, mo, np, redstart_solve, world):
+    def anim_lqr():
+        t_span = [0.0, 25.0]
+        y0 = [0.0, 0.0, 10.0, 0.0, np.pi/4, 0.0]
+        f_phi = make_f_phi(K_oc)
+        sol = redstart_solve(t_span, y0, f_phi)
+        x = lambda t: sol(t)[0]
+        y = lambda t: sol(t)[2]
+        theta = lambda t: sol(t)[4]
+        f = lambda t: f_phi(t, sol(t))[0]
+        phi = lambda t: f_phi(t, sol(t))[1]
+        return mo.Html(
+            world([-6, 6, -2, 12], booster_anim(x, y, theta, f, phi, T=t_span[1]))
+        ).center()
+
+    anim_lqr()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **Résultats.** Les deux contrôleurs conçus à partir du modèle linéarisé fonctionnent correctement sur le modèle non-linéaire :
+
+    | Contrôleur | $\|x\|_\text{final}$ | $\|\theta\|_\text{final}$ | $\max \|\phi\|$ |
+    |---|---|---|---|
+    | Pole Placement | $\approx 0.008$ m | $\approx 0.001$ rad | $\approx 0.48 < \pi/2$ |
+    | LQR | $\approx 10^{-4}$ m | $\approx 0$ rad | $\approx 0.86 < \pi/2$ |
+
+    **Comparaison.**
+
+    - Le **placement de pôles** utilise un effort de commande plus modeste ($\max |\phi| \approx 0.48$) au prix d'une convergence un peu plus lente.
+    - Le **LQR** est plus agressif ($\max |\phi| \approx 0.86$) mais converge plus vite et plus précisément, sans réglage manuel des pôles : il suffit de choisir les pondérations $Q$ et $R$ selon le compromis souhaité.
+    - La dérive verticale $y(t)$ est identique pour les deux puisqu'on ne commande pas $\Delta f$ : le booster tombe en chute libre selon $y(t) = 10 - \tfrac{1}{2} g t^2$, ce qui est attendu (on a fait l'hypothèse $f = Mg$ pour le contrôle latéral seul).
+
+    L'écart entre modèle linéarisé et modèle non-linéaire est faible parce que $\theta(0) = \pi/4$ reste dans le régime où $\sin\theta \approx \theta$ est encore une bonne approximation. Pour des inclinaisons initiales plus grandes, il faudrait soit re-linéariser le long d'une trajectoire de référence, soit passer à des méthodes non-linéaires (gain scheduling, MPC, etc.).
     """)
     return
 

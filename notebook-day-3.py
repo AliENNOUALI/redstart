@@ -2633,6 +2633,95 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    Le système est plat avec sortie plate $h = (h_x, h_y)$ de degré relatif $4$ par coordonnée. Donc 8 conditions par coordonnée (valeurs et dérivées jusqu'à l'ordre 3, en $t = 0$ et $t = t_f$) suffisent à imposer une trajectoire — exactement le nombre de coefficients d'un polynôme de degré 7.
+
+    **Procédure.**
+    1. Convertir les états initiaux et finaux en valeurs de $h, \dot h, \ddot h, h^{(3)}$ via `Tr`.
+    2. Trouver, pour chaque composante $h_i$ ($i = x, y$), le polynôme $p_{i}(t) = \sum_{k=0}^{7} a_{k}\,t^{k}$ qui interpole les 8 conditions.
+    3. À partir de $h(t)$ et de ses dérivées (jusqu'à l'ordre 4 — la 4ème dérivée fournit $u(t)$), reconstruire l'état complet par `T_inv`, puis calculer $v = R(\theta-\pi/2)^{T}(M u - N)$ d'où $f_x, f_y$, $f = \sqrt{f_x^{2}+f_y^{2}}$ et $\phi = \operatorname{atan2}(-f_x, f_y) - \theta$.
+    """)
+    return
+
+
+@app.cell
+def _(M, T_inv, Tr, l, np):
+    def _poly_7(t0, tf, conds_0, conds_f):
+        rows = []
+        rhs = []
+        for t, conds in [(t0, conds_0), (tf, conds_f)]:
+            # p(t), dp(t), d2p(t), d3p(t)
+            for d in range(4):
+                row = [0.0] * 8
+                for k in range(8):
+                    if k - d >= 0:
+                        coef = 1.0
+                        for j in range(d):
+                            coef *= (k - j)
+                        row[k] = coef * t ** (k - d)
+                rows.append(row)
+                rhs.append(conds[d])
+        A_mat = np.array(rows)
+        b_vec = np.array(rhs)
+        coeffs = np.linalg.solve(A_mat, b_vec)
+        def make_eval(d):
+            def f_(t):
+                s = 0.0
+                for k in range(d, 8):
+                    coef = 1.0
+                    for j in range(d):
+                        coef *= (k - j)
+                    s = s + coeffs[k] * coef * t ** (k - d)
+                return s
+            return f_
+        return [make_eval(d) for d in range(5)]
+
+
+    def compute(
+        x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+        x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+        tf,
+    ):
+        H0 = Tr(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0)
+        Hf = Tr(x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf)
+        conds_x0 = (H0[0], H0[2], H0[4], H0[6])
+        conds_xf = (Hf[0], Hf[2], Hf[4], Hf[6])
+        conds_y0 = (H0[1], H0[3], H0[5], H0[7])
+        conds_yf = (Hf[1], Hf[3], Hf[5], Hf[7])
+        polx = _poly_7(0.0, tf, conds_x0, conds_xf)
+        poly = _poly_7(0.0, tf, conds_y0, conds_yf)
+
+        def fun(t):
+            h_x, dh_x, d2h_x, d3h_x, d4h_x = (p(t) for p in polx)
+            h_y, dh_y, d2h_y, d3h_y, d4h_y = (p(t) for p in poly)
+            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+            )
+            u = np.array([d4h_x, d4h_y])
+            s_, c_ = np.sin(theta), np.cos(theta)
+            Rmat = np.array([[s_, c_], [-c_, s_]])
+            N = np.array([
+                2 * dz * dtheta * c_ - z * dtheta ** 2 * s_,
+                2 * dz * dtheta * s_ + z * dtheta ** 2 * c_,
+            ])
+            v = Rmat.T @ (M * u - N)
+            a_aux = z - M * l * dtheta ** 2 / 6
+            b_aux = M * l * v[1] / (6 * z)
+            fx = s_ * a_aux + c_ * b_aux
+            fy = -c_ * a_aux + s_ * b_aux
+            f = np.sqrt(fx ** 2 + fy ** 2)
+            phi = np.arctan2(-fx, fy) - theta
+            # ramener phi dans (-pi, pi]
+            phi = (phi + np.pi) % (2 * np.pi) - np.pi
+            return x, dx, y, dy, theta, dtheta, z, dz, f, phi
+
+        return fun
+
+    return (compute,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Graphical Validation
 
     Test your `compute` function with
@@ -2643,6 +2732,60 @@ def _(mo):
 
     Make the graph of the relevant variables as a function of time, then make an animation out of the same result. Comment and iterate if necessary!
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On teste `compute` avec
+    - $(x_{0}, \dot x_{0}, y_{0}, \dot y_{0}, \theta_{0}, \dot\theta_{0}, z_{0}, \dot z_{0}) = (5,\, 0,\, 20,\, -1,\, -\pi/8,\, 0,\, -Mg,\, 0)$,
+    - $(x_{t_f}, \dot x_{t_f}, y_{t_f}, \dot y_{t_f}, \theta_{t_f}, \dot\theta_{t_f}, z_{t_f}, \dot z_{t_f}) = (0,\, 0,\, 2\ell/3,\, 0,\, 0,\, 0,\, -Mg,\, 0)$,
+    - $t_{f} = 10$.
+
+    On trace les graphes des variables pertinentes et on vérifie que la trajectoire **simulée** à partir de $(x_{0}, \dot x_{0}, y_{0}, \dot y_{0}, \theta_{0}, \dot\theta_{0})$ avec $f(t), \phi(t)$ fournis par `compute`, recolle bien sur la trajectoire planifiée.
+    """)
+    return
+
+
+@app.cell
+def _(M, compute, g, l, np):
+    fun_traj = compute(
+        x_0=5.0, dx_0=0.0, y_0=20.0, dy_0=-1.0,
+        theta_0=-np.pi / 8, dtheta_0=0.0, z_0=-M * g, dz_0=0.0,
+        x_tf=0.0, dx_tf=0.0, y_tf=2 / 3 * l, dy_tf=0.0,
+        theta_tf=0.0, dtheta_tf=0.0, z_tf=-M * g, dz_tf=0.0,
+        tf=10.0,
+    )
+
+    T_FINAL = 10.0
+    ts = np.linspace(0.0, T_FINAL, 1000)
+    traj = np.array([fun_traj(t) for t in ts])
+    # colonnes : x, dx, y, dy, theta, dtheta, z, dz, f, phi
+    x_t, dx_t, y_t, dy_t, th_t, dth_t, z_t, dz_t, f_t, phi_t = traj.T
+
+    return dth_t, dx_t, dy_t, f_t, phi_t, th_t, ts, x_t, y_t, z_t
+
+
+@app.cell
+def _(dth_t, dx_t, dy_t, f_t, np, phi_t, plt, th_t, ts, x_t, y_t, z_t):
+    fig, axes = plt.subplots(3, 3, figsize=(13, 9))
+    ax = axes.flat
+    ax[0].plot(ts, x_t);    ax[0].set_title("$x(t)$");     ax[0].grid(True)
+    ax[1].plot(ts, y_t);    ax[1].set_title("$y(t)$");     ax[1].grid(True)
+    ax[2].plot(ts, th_t);   ax[2].set_title(r"$\theta(t)$"); ax[2].grid(True)
+    ax[3].plot(ts, dx_t);   ax[3].set_title(r"$\dot x(t)$"); ax[3].grid(True)
+    ax[4].plot(ts, dy_t);   ax[4].set_title(r"$\dot y(t)$"); ax[4].grid(True)
+    ax[5].plot(ts, dth_t);  ax[5].set_title(r"$\dot\theta(t)$"); ax[5].grid(True)
+    ax[6].plot(ts, f_t);    ax[6].set_title("$f(t)$");      ax[6].grid(True)
+    ax[6].axhline(0, color='r', ls=':', label='$f=0$'); ax[6].legend()
+    ax[7].plot(ts, phi_t);  ax[7].set_title(r"$\phi(t)$"); ax[7].grid(True)
+    ax[7].axhline(np.pi/2, color='r', ls=':'); ax[7].axhline(-np.pi/2, color='r', ls=':')
+    ax[8].plot(ts, z_t);    ax[8].set_title("$z(t)$");      ax[8].grid(True)
+    for a in ax: a.set_xlabel('temps $t$')
+    fig.suptitle("Trajectoire planifiée par linéarisation exacte")
+    plt.tight_layout(); plt.show()
+
     return
 
 

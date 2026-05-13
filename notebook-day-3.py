@@ -2500,8 +2500,7 @@ def _(M, g, l, np):
         d3h_y = -(dz / M) * c + (z / M) * s * dtheta
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
-    # Vérification sur un état
-    print(Tr(1.0, 0.5, 2.0, -0.2, 0.3, 0.1, -1.0, 0.05))
+
     return
 
 
@@ -2514,6 +2513,45 @@ def _(mo):
     Assume for the sake of simplicity that $z<0$ at all times. Show that given the values of $h$, $\dot{h}$, $\ddot{h}$ and $h^{(3)}$, one can uniquely compute the booster state (the values of $x$, $\dot{x}$, $y$, $\dot{y}$, $\theta$, $\dot{\theta}$) and auxiliary system state (the values of $z$ and $\dot{z}$).
 
     Implement the corresponding function `T_inv`.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    On part de $\ddot h_x = (z/M)\sin\theta$, $\ddot h_y + g = -(z/M)\cos\theta$.
+
+    **Norme** : $\ddot h_x^{2} + (\ddot h_y + g)^{2} = (z/M)^{2}$, donc, avec l'hypothèse $z < 0$ :
+    $$
+    \boxed{\;
+    z = -M\,\sqrt{\ddot h_x^{2} + (\ddot h_y + g)^{2}}.
+    \;}
+    $$
+
+    **Direction.** Le vecteur $(\sin\theta, \cos\theta) = (M/z)(\ddot h_x, -(\ddot h_y + g))$. Pour $z < 0$ cela revient à
+    $$
+    \boxed{\;\theta = \operatorname{atan2}\bigl(-\ddot h_x,\; \ddot h_y + g\bigr).\;}
+    $$
+    avec
+    $\text{atan2}(y, x) \in (-\pi, \pi]$
+
+    Il retourne l'angle **complet** du vecteur $(x, y)$ par rapport à l'axe des abscisses, en tenant compte du signe de $x$ et $y$ séparément pour déterminer le bon quadrant.
+
+    Pour $\dot z, \dot\theta$ : on a vu que
+    $h^{(3)} = (1/M)\,R(\theta - \pi/2)\,(\dot z, z\dot\theta)^{T}$, donc
+    $$
+    \begin{bmatrix} \dot z \\ z\,\dot\theta \end{bmatrix} = M\,R(\theta - \pi/2)^{T}\,h^{(3)}
+    = M\begin{bmatrix} \sin\theta & -\cos\theta \\ \cos\theta & \sin\theta \end{bmatrix} \begin{bmatrix} h^{(3)}_x \\ h^{(3)}_y \end{bmatrix}.
+    $$
+    D'où
+    $$
+    \dot z = M\bigl(\sin\theta\,h^{(3)}_x - \cos\theta\,h^{(3)}_y\bigr), \qquad
+    \dot\theta = \frac{M}{z}\bigl(\cos\theta\,h^{(3)}_x + \sin\theta\,h^{(3)}_y\bigr).
+    $$
+    (le dénominateur $z$ est non nul car $z < 0$.)
+
+    Enfin $x = h_x + (\ell/6)\sin\theta$, $y = h_y - (\ell/6)\cos\theta$, $\dot x = \dot h_x + (\ell/6)\cos\theta\,\dot\theta$, $\dot y = \dot h_y + (\ell/6)\sin\theta\,\dot\theta$.
     """)
     return
 

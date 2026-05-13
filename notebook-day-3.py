@@ -2280,7 +2280,7 @@ def _(l, np, plt):
         h_pt = np.array([x_cm - (l/6)*np.sin(theta), y_cm + (l/6)*np.cos(theta)])
         ax.plot([bot[0], top[0]], [bot[1], top[1]], 'k-', lw=4, label="booster")
         ax.plot(x_cm, y_cm, 'bo', ms=8, label="centre de masse")
-        ax.plot(*h_pt, 'rs', ms=10, label=r"point $h$ (centre de percussion)")
+        ax.plot(*h_pt, 'rs', ms=10, label=r"point $h$")
         ax.plot(*bot, 'g^', ms=10, label="réacteur")
         ax.plot(*top, 'k^', ms=8, label="sommet")
         ax.set_aspect('equal')
@@ -2377,24 +2377,37 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### $h^{(3)}$ — troisième dérivée
+    ### $h^{(3)}$
 
-    En dérivant $\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}$ :
+    On dérive $\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}$ composante par composante (règle du produit) :
 
     $$
     h^{(3)} = \frac{1}{M}\begin{bmatrix} -\dot{z}\sin\theta - z\dot{\theta}\cos\theta \\ \dot{z}\cos\theta - z\dot{\theta}\sin\theta \end{bmatrix}
-    = \frac{1}{M}\begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix} \begin{bmatrix} \dot{z} \\ z\dot{\theta} \end{bmatrix}
     $$
 
-    ### $h^{(4)}$ — quatrième dérivée
+    ### $h^{(4)}$
 
-    En dérivant $h^{(3)}$, avec $\ddot{z} = v_1$ :
+    On dérive $h^{(3)}$ composante par composante. Pour la première :
 
     $$
-    h^{(4)} = \frac{1}{M}\begin{bmatrix}
-    -v_1\sin\theta - 2\dot{z}\dot{\theta}\cos\theta + z\dot{\theta}^2\sin\theta - z\ddot{\theta}\cos\theta \\
-    v_1\cos\theta - 2\dot{z}\dot{\theta}\sin\theta - z\dot{\theta}^2\cos\theta - z\ddot{\theta}\sin\theta
-    \end{bmatrix}
+    \frac{d}{dt}\left(-\dot{z}\sin\theta - z\dot{\theta}\cos\theta\right)
+    = -\ddot{z}\sin\theta - \dot{z}\dot{\theta}\cos\theta - (\dot{z}\dot{\theta} + z\ddot{\theta})\cos\theta + z\dot{\theta}^2\sin\theta
+    $$
+
+    Pour la seconde :
+
+    $$
+    \frac{d}{dt}\left(\dot{z}\cos\theta - z\dot{\theta}\sin\theta\right)
+    = \ddot{z}\cos\theta - \dot{z}\dot{\theta}\sin\theta - (\dot{z}\dot{\theta} + z\ddot{\theta})\sin\theta - z\dot{\theta}^2\cos\theta
+    $$
+
+    Avec $\ddot{z} = v_1$ :
+
+    $$
+    \boxed{h^{(4)} = \frac{1}{M}\begin{bmatrix}
+    -v_1\sin\theta - 2\dot{z}\dot{\theta}\cos\theta - z\ddot{\theta}\cos\theta + z\dot{\theta}^2\sin\theta \\
+    v_1\cos\theta - 2\dot{z}\dot{\theta}\sin\theta - z\ddot{\theta}\sin\theta - z\dot{\theta}^2\cos\theta
+    \end{bmatrix}}
     $$
     """)
     return

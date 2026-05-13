@@ -2381,8 +2381,6 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## 🔓 Third and Fourth-Order Derivatives
-
     ### $h^{(3)}$
 
     On dérive $\ddot{h}$ composante par composante (règle du produit) :

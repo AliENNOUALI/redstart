@@ -2477,6 +2477,37 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On utilise simplement les formules précédentes :
+    - $h_x = x - (\ell/6)\sin\theta$, $h_y = y + (\ell/6)\cos\theta$ ;
+    - $\dot h_x = \dot x - (\ell/6)\cos\theta\,\dot\theta$, $\dot h_y = \dot y - (\ell/6)\sin\theta\,\dot\theta$ ;
+    - $\ddot h_x = (z/M)\sin\theta$, $\ddot h_y = -(z/M)\cos\theta - g$ ;
+    - $h^{(3)}_x = (\dot z/M)\sin\theta + (z/M)\cos\theta\,\dot\theta$, $h^{(3)}_y = -(\dot z/M)\cos\theta + (z/M)\sin\theta\,\dot\theta$.
+    """)
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def Tr(x, dx, y, dy, theta, dtheta, z, dz):
+        s, c = np.sin(theta), np.cos(theta)
+        h_x = x - (l / 6) * s
+        h_y = y + (l / 6) * c
+        dh_x = dx - (l / 6) * c * dtheta
+        dh_y = dy - (l / 6) * s * dtheta
+        d2h_x = (z / M) * s
+        d2h_y = -(z / M) * c - g
+        d3h_x = (dz / M) * s + (z / M) * c * dtheta
+        d3h_y = -(dz / M) * c + (z / M) * s * dtheta
+        return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+
+    # Vérification sur un état
+    print(Tr(1.0, 0.5, 2.0, -0.2, 0.3, 0.1, -1.0, 0.05))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Inversion
 
 

@@ -2309,57 +2309,61 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ### $\dot{h}$ — première dérivée temporelle
-
+    **Première dérivée** (simple dérivation) :
     $$
-    h = \begin{bmatrix} x - \frac{\ell}{6}\sin\theta \\ y + \frac{\ell}{6}\cos\theta \end{bmatrix}
-    $$
-
-    En dérivant par rapport au temps :
-
-    $$
-    \dot{h} = \begin{bmatrix} \dot{x} - \frac{\ell}{6}\dot{\theta}\cos\theta \\ \dot{y} - \frac{\ell}{6}\dot{\theta}\sin\theta \end{bmatrix}
+    \boxed{\;
+    \dot h = \begin{bmatrix} \dot x - (\ell/6)\cos\theta\,\dot\theta \\ \dot y - (\ell/6)\sin\theta\,\dot\theta \end{bmatrix}.
+    \;}
     $$
 
-    ### $\ddot{h}$ — deuxième dérivée temporelle
-
-    En dérivant à nouveau :
-
+    **Seconde dérivée.** On dérive encore une fois :
     $$
-    \ddot{h} = \begin{bmatrix} \ddot{x} - \frac{\ell}{6}(\ddot{\theta}\cos\theta - \dot{\theta}^2\sin\theta) \\ \ddot{y} - \frac{\ell}{6}(\ddot{\theta}\sin\theta + \dot{\theta}^2\cos\theta) \end{bmatrix}
+    \ddot h_x = \ddot x + (\ell/6)\sin\theta\,\dot\theta^{2} - (\ell/6)\cos\theta\,\ddot\theta,
     $$
-
-    ### Substitution via la dynamique du booster
-
-    Les équations du mouvement sont :
-
     $$
-    M\ddot{x} = f_x, \qquad M\ddot{y} = f_y - Mg, \qquad J\ddot{\theta} = -\frac{\ell}{2}(f_x\cos\theta + f_y\sin\theta - Mg\sin\theta)...
+    \ddot h_y = \ddot y - (\ell/6)\cos\theta\,\dot\theta^{2} - (\ell/6)\sin\theta\,\ddot\theta.
     $$
 
-    Avec le système auxiliaire branché, on a :
-
+    On injecte la dynamique du booster $M\ddot x = f_x$, $M\ddot y = f_y - Mg$, $J\ddot\theta = \tau$, avec le couple $\tau = (\ell/2)(\cos\theta\,f_x + \sin\theta\,f_y)$ (projection du produit vectoriel $\vec r \wedge \vec f$ sur $\vec e_{z}$, où $\vec r = (\ell/2)(\sin\theta, -\cos\theta)$). Comme $J = M\ell^{2}/12$ :
     $$
-    \begin{bmatrix} f_x \\ f_y \end{bmatrix} = R\!\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} z - \frac{M\ell\dot{\theta}^2}{6} \\ \frac{M\ell v_2}{6z} \end{bmatrix}
-    $$
-
-    où $R(\theta - \pi/2) = \begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix}$.
-
-    Donc :
-
-    $$
-    f_x = -\sin\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \cos\theta\cdot\frac{M\ell v_2}{6z}
+    (\ell/6)\,\ddot\theta = \frac{1}{M}\bigl(\cos\theta\,f_x + \sin\theta\,f_y\bigr).
     $$
 
+    On branche maintenant le système auxiliaire. Avec $R(\theta-\pi/2) = \begin{bmatrix}\sin\theta & \cos\theta \\ -\cos\theta & \sin\theta\end{bmatrix}$, en posant $a := z - M\ell\dot\theta^{2}/6$ et $b := M\ell v_{2}/(6z)$ :
     $$
-    f_y = \cos\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \sin\theta\cdot\frac{M\ell v_2}{6z}
+    f_x = \sin\theta\,a + \cos\theta\,b, \qquad f_y = -\cos\theta\,a + \sin\theta\,b.
+    $$
+    On calcule les deux combinaisons utiles :
+    $$
+    \sin\theta\,f_x - \cos\theta\,f_y = a, \qquad \cos\theta\,f_x + \sin\theta\,f_y = b.
+    $$
+    (Ce qui s'écrit aussi : multiplier par $R(\theta-\pi/2)^{T}$ redonne $(a, b)$ — c'est le sens géométrique du choix de la rotation.)
+
+    En reportant dans $\ddot h_x$ :
+    $$
+    \ddot h_x = \frac{f_x}{M} + \frac{\ell}{6}\sin\theta\,\dot\theta^{2} - \frac{\cos\theta}{M}\bigl(\cos\theta\,f_x + \sin\theta\,f_y\bigr)
+    = \frac{\sin\theta}{M}\bigl(\sin\theta\,f_x - \cos\theta\,f_y\bigr) + \frac{\ell}{6}\sin\theta\,\dot\theta^{2}
+    = \frac{\sin\theta}{M}\,a + \frac{\ell}{6}\sin\theta\,\dot\theta^{2}.
+    $$
+    Comme $a = z - M\ell\dot\theta^{2}/6$, les deux termes en $\dot\theta^{2}$ se compensent exactement :
+    $$
+    \boxed{\;\ddot h_x = \frac{z}{M}\,\sin\theta.\;}
+    $$
+    De même,
+    $$
+    \ddot h_y = \frac{f_y}{M} - g - \frac{\ell}{6}\cos\theta\,\dot\theta^{2} - \frac{\sin\theta}{M}\bigl(\cos\theta\,f_x + \sin\theta\,f_y\bigr)
+    = -\frac{\cos\theta}{M}\bigl(\sin\theta\,f_x - \cos\theta\,f_y\bigr) - g - \frac{\ell}{6}\cos\theta\,\dot\theta^{2}
+    = -\frac{z}{M}\cos\theta - g.
+    $$
+    $$
+    \boxed{\;\ddot h_y = -\frac{z}{M}\cos\theta - g.\;}
     $$
 
-    En substituant $\ddot{x} = f_x/M$, $\ddot{y} = f_y/M - g$, on obtient après simplification :
-
+    Sous forme compacte :
     $$
-    \boxed{\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}}
+    \ddot h = \frac{z}{M}\begin{bmatrix} \sin\theta \\ -\cos\theta \end{bmatrix} + \begin{bmatrix} 0 \\ -g \end{bmatrix}.
     $$
+    $\ddot h$ ne dépend bien plus que de $\theta$ et $z$.
     """)
     return
 
@@ -2377,37 +2381,32 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ## 🔓 Third and Fourth-Order Derivatives
+
     ### $h^{(3)}$
 
-    On dérive $\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}$ composante par composante (règle du produit) :
+    On dérive $\ddot{h}$ composante par composante (règle du produit) :
 
     $$
-    h^{(3)} = \frac{1}{M}\begin{bmatrix} -\dot{z}\sin\theta - z\dot{\theta}\cos\theta \\ \dot{z}\cos\theta - z\dot{\theta}\sin\theta \end{bmatrix}
+    h^{(3)} = \frac{1}{M}\begin{bmatrix} \dot{z}\sin\theta + z\cos\theta\,\dot{\theta} \\ -\dot{z}\cos\theta + z\sin\theta\,\dot{\theta} \end{bmatrix} = \frac{1}{M}\, R\!\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} \dot{z} \\ z\dot{\theta} \end{bmatrix}
     $$
 
     ### $h^{(4)}$
 
-    On dérive $h^{(3)}$ composante par composante. Pour la première :
+    On dérive une fois de plus. En utilisant $\ddot{z} = v_1$ et $\ddot{\theta} = v_2/z$ (qui résulte de $J\ddot{\theta} = (\ell/2)(\cos\theta\, f_x + \sin\theta\, f_y) = (\ell/2)\,b$ avec $b = M\ell v_2/(6z)$ et $J = M\ell^2/12$) :
 
     $$
-    \frac{d}{dt}\left(-\dot{z}\sin\theta - z\dot{\theta}\cos\theta\right)
-    = -\ddot{z}\sin\theta - \dot{z}\dot{\theta}\cos\theta - (\dot{z}\dot{\theta} + z\ddot{\theta})\cos\theta + z\dot{\theta}^2\sin\theta
+    h_x^{(4)} = \frac{1}{M}\left[\sin\theta\, v_1 + \cos\theta\, v_2 + 2\dot{z}\dot{\theta}\cos\theta - z\dot{\theta}^2\sin\theta\right]
     $$
 
-    Pour la seconde :
-
     $$
-    \frac{d}{dt}\left(\dot{z}\cos\theta - z\dot{\theta}\sin\theta\right)
-    = \ddot{z}\cos\theta - \dot{z}\dot{\theta}\sin\theta - (\dot{z}\dot{\theta} + z\ddot{\theta})\sin\theta - z\dot{\theta}^2\cos\theta
+    h_y^{(4)} = \frac{1}{M}\left[-\cos\theta\, v_1 + \sin\theta\, v_2 + 2\dot{z}\dot{\theta}\sin\theta + z\dot{\theta}^2\cos\theta\right]
     $$
 
-    Avec $\ddot{z} = v_1$ :
+    soit
 
     $$
-    \boxed{h^{(4)} = \frac{1}{M}\begin{bmatrix}
-    -v_1\sin\theta - 2\dot{z}\dot{\theta}\cos\theta - z\ddot{\theta}\cos\theta + z\dot{\theta}^2\sin\theta \\
-    v_1\cos\theta - 2\dot{z}\dot{\theta}\sin\theta - z\ddot{\theta}\sin\theta - z\dot{\theta}^2\cos\theta
-    \end{bmatrix}}
+    \boxed{h^{(4)} = \frac{1}{M}\,\begin{bmatrix} 2\dot{z}\dot{\theta}\cos\theta - z\dot{\theta}^2\sin\theta \\ 2\dot{z}\dot{\theta}\sin\theta + z\dot{\theta}^2\cos\theta \end{bmatrix} + \frac{1}{M}\, R\!\left(\theta - \frac{\pi}{2}\right) v}
     $$
     """)
     return

@@ -2439,7 +2439,7 @@ def _(mo):
     \frac{1}{M}\, R\!\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} v_1 + \alpha \\ v_2 + \beta \end{bmatrix} = u
     $$
 
-    La matrice $R(\theta - \pi/2) = \begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix}$ est une rotation, donc inversible avec $R^{-1} = R^\top$ et $\det(R) = \sin^2\theta + \cos^2\theta = 1$. En multipliant les deux membres par $M R^\top$ :
+    La matrice $R\!\left(\theta - \tfrac{\pi}{2}\right) = \begin{bmatrix} \sin\theta & \cos\theta \\ -\cos\theta & \sin\theta \end{bmatrix}$ est une rotation, donc inversible avec $R^{-1} = R^\top$ et $\det(R) = \sin^2\theta + \cos^2\theta = 1$. En multipliant les deux membres par $M R^\top$ :
 
     $$
     \begin{bmatrix} v_1 + \alpha \\ v_2 + \beta \end{bmatrix} = M R^\top u

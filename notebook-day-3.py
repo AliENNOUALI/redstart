@@ -2789,5 +2789,28 @@ def _(dth_t, dx_t, dy_t, f_t, np, phi_t, plt, th_t, ts, x_t, y_t, z_t):
     return
 
 
+@app.cell
+def _(M, booster_anim, compute, g, l, mo, np, world):
+    def animate_exact_linearization():
+        tf = 10.0
+        fun = compute(
+            x_0=5.0, dx_0=0.0, y_0=20.0, dy_0=-1.0,
+            theta_0=-np.pi/8, dtheta_0=0.0, z_0=-M*g, dz_0=0.0,
+            x_tf=0.0, dx_tf=0.0, y_tf=2*l/3, dy_tf=0.0,
+            theta_tf=0.0, dtheta_tf=0.0, z_tf=-M*g, dz_tf=0.0,
+            tf=tf,
+        )
+        x     = lambda t: fun(t)[0]
+        y     = lambda t: fun(t)[2]
+        theta = lambda t: fun(t)[4]
+        f_t   = lambda t: fun(t)[8]
+        phi_t = lambda t: fun(t)[9]
+        svg = world([-3, 10, -2, 22], booster_anim(x, y, theta, f_t, phi_t, T=tf))
+        return mo.Html(f"<div style='text-align:center'>{svg}</div>")
+
+    animate_exact_linearization()
+    return
+
+
 if __name__ == "__main__":
     app.run()

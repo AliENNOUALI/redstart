@@ -2427,6 +2427,46 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    On cherche $v = (v_1, v_2)$ tel que $h^{(4)} = u$. En posant par commodité :
+
+    $$
+    \alpha = 2\dot{z}\dot{\theta}\cos\theta - z\dot{\theta}^2\sin\theta, \qquad \beta = 2\dot{z}\dot{\theta}\sin\theta + z\dot{\theta}^2\cos\theta
+    $$
+
+    la condition $h^{(4)} = u$ s'écrit :
+
+    $$
+    \frac{1}{M}\, R\!\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} v_1 + \alpha \\ v_2 + \beta \end{bmatrix} = u
+    $$
+
+    La matrice $R(\theta - \pi/2) = \begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix}$ est une rotation, donc inversible avec $R^{-1} = R^\top$ et $\det(R) = \sin^2\theta + \cos^2\theta = 1$. En multipliant les deux membres par $M R^\top$ :
+
+    $$
+    \begin{bmatrix} v_1 + \alpha \\ v_2 + \beta \end{bmatrix} = M R^\top u
+    \qquad \Longrightarrow \qquad
+    \boxed{\begin{bmatrix} v_1 \\ v_2 \end{bmatrix} = M \begin{bmatrix} -\sin\theta & \cos\theta \\ -\cos\theta & -\sin\theta \end{bmatrix} \begin{bmatrix} u_1 \\ u_2 \end{bmatrix} - \begin{bmatrix} \alpha \\ \beta \end{bmatrix}}
+    $$
+
+    En substituant ce choix de $v$ dans l'expression de $h^{(4)}$, tous les termes non-linéaires se compensent :
+
+    $$
+    h^{(4)} = \frac{1}{M}\,R \cdot M R^\top u = R R^\top u = I_2\, u
+    $$
+
+    car $RR^\top = I_2$ pour toute rotation. On obtient donc :
+
+    $$
+    \boxed{h^{(4)} = u}
+    $$
+
+    Le système bouclé est **linéaire et découplé** : deux chaînes de quatre intégrateurs indépendantes, une par composante de $h$. C'est le principe de la **linéarisation exacte par retour d'état**.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 State to Derivatives of the Output
 
     Implement a function `Tr` of `x, dx, y, dy, theta, dtheta, z, dz` that returns `h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y`.

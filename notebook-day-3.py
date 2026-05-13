@@ -2377,6 +2377,32 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### $h^{(3)}$ — troisième dérivée
+
+    En dérivant $\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}$ :
+
+    $$
+    h^{(3)} = \frac{1}{M}\begin{bmatrix} -\dot{z}\sin\theta - z\dot{\theta}\cos\theta \\ \dot{z}\cos\theta - z\dot{\theta}\sin\theta \end{bmatrix}
+    = \frac{1}{M}\begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix} \begin{bmatrix} \dot{z} \\ z\dot{\theta} \end{bmatrix}
+    $$
+
+    ### $h^{(4)}$ — quatrième dérivée
+
+    En dérivant $h^{(3)}$, avec $\ddot{z} = v_1$ :
+
+    $$
+    h^{(4)} = \frac{1}{M}\begin{bmatrix}
+    -v_1\sin\theta - 2\dot{z}\dot{\theta}\cos\theta + z\dot{\theta}^2\sin\theta - z\ddot{\theta}\cos\theta \\
+    v_1\cos\theta - 2\dot{z}\dot{\theta}\sin\theta - z\dot{\theta}^2\cos\theta - z\ddot{\theta}\sin\theta
+    \end{bmatrix}
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Exact Linearization
 
     Show that with yet another auxiliary system with input $u=(u_1, u_2)$ and output $v$ fed into the previous one, we can achieve the dynamics

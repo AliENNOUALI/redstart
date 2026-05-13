@@ -2800,6 +2800,7 @@ def _(M, booster_anim, compute, g, l, mo, np, world):
             theta_tf=0.0, dtheta_tf=0.0, z_tf=-M*g, dz_tf=0.0,
             tf=tf,
         )
+    
         x     = lambda t: fun(t)[0]
         y     = lambda t: fun(t)[2]
         theta = lambda t: fun(t)[4]

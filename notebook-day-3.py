@@ -2309,6 +2309,64 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    ### $\dot{h}$ — première dérivée temporelle
+
+    $$
+    h = \begin{bmatrix} x - \frac{\ell}{6}\sin\theta \\ y + \frac{\ell}{6}\cos\theta \end{bmatrix}
+    $$
+
+    En dérivant par rapport au temps :
+
+    $$
+    \dot{h} = \begin{bmatrix} \dot{x} - \frac{\ell}{6}\dot{\theta}\cos\theta \\ \dot{y} - \frac{\ell}{6}\dot{\theta}\sin\theta \end{bmatrix}
+    $$
+
+    ### $\ddot{h}$ — deuxième dérivée temporelle
+
+    En dérivant à nouveau :
+
+    $$
+    \ddot{h} = \begin{bmatrix} \ddot{x} - \frac{\ell}{6}(\ddot{\theta}\cos\theta - \dot{\theta}^2\sin\theta) \\ \ddot{y} - \frac{\ell}{6}(\ddot{\theta}\sin\theta + \dot{\theta}^2\cos\theta) \end{bmatrix}
+    $$
+
+    ### Substitution via la dynamique du booster
+
+    Les équations du mouvement sont :
+
+    $$
+    M\ddot{x} = f_x, \qquad M\ddot{y} = f_y - Mg, \qquad J\ddot{\theta} = -\frac{\ell}{2}(f_x\cos\theta + f_y\sin\theta - Mg\sin\theta)...
+    $$
+
+    Avec le système auxiliaire branché, on a :
+
+    $$
+    \begin{bmatrix} f_x \\ f_y \end{bmatrix} = R\!\left(\theta - \frac{\pi}{2}\right) \begin{bmatrix} z - \frac{M\ell\dot{\theta}^2}{6} \\ \frac{M\ell v_2}{6z} \end{bmatrix}
+    $$
+
+    où $R(\theta - \pi/2) = \begin{bmatrix} -\sin\theta & -\cos\theta \\ \cos\theta & -\sin\theta \end{bmatrix}$.
+
+    Donc :
+
+    $$
+    f_x = -\sin\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \cos\theta\cdot\frac{M\ell v_2}{6z}
+    $$
+
+    $$
+    f_y = \cos\theta\left(z - \frac{M\ell\dot{\theta}^2}{6}\right) - \sin\theta\cdot\frac{M\ell v_2}{6z}
+    $$
+
+    En substituant $\ddot{x} = f_x/M$, $\ddot{y} = f_y/M - g$, on obtient après simplification :
+
+    $$
+    \boxed{\ddot{h} = \frac{1}{M}\begin{bmatrix} -z\sin\theta \\ z\cos\theta \end{bmatrix} - \begin{bmatrix} 0 \\ g \end{bmatrix}}
+    $$
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 Third and Fourth-Order Derivatives
 
     Compute the third derivative $h^{(3)}$ of $h$ as a function of $\theta$ and $z$ (and constants) and then the fourth derivative $h^{(4)}$ of $h$ with respect to time as a function of $\theta$, $\dot{\theta}$, $z$, $\dot{z}$, $v$ (and constants) when the auxiliary system is on.

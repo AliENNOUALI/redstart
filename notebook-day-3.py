@@ -2254,6 +2254,51 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    Le booster est modélisé comme une tige rigide de longueur $\ell$, dont le centre de masse est en $(x, y)$, inclinée d'un angle $\theta$ par rapport à la verticale.
+
+    Le vecteur unitaire **le long de l'axe du booster** (vers la tête) est :
+
+    $$\vec{n} = \begin{bmatrix} -\sin\theta \\ \cos\theta \end{bmatrix}$$
+
+    Donc on peut réécrire $h$ comme :
+
+    $$h = \begin{bmatrix} x \\ y \end{bmatrix} + \frac{\ell}{6} \begin{bmatrix} -\sin\theta \\ \cos\theta \end{bmatrix}$$
+
+    **$h$ est la position du point situé à $\ell/6$ au-dessus du centre de masse, le long de l'axe du booster** (en direction de la tête de la fusée).
+    """)
+    return
+
+
+@app.cell
+def _(l, np, plt):
+    def draw_geom():
+        fig, ax = plt.subplots(figsize=(8, 7))
+        theta = np.pi / 6
+        x_cm, y_cm = 0.0, 0.0
+        top = np.array([x_cm - (l/2)*np.sin(theta), y_cm + (l/2)*np.cos(theta)])
+        bot = np.array([x_cm + (l/2)*np.sin(theta), y_cm - (l/2)*np.cos(theta)])
+        h_pt = np.array([x_cm - (l/6)*np.sin(theta), y_cm + (l/6)*np.cos(theta)])
+        ax.plot([bot[0], top[0]], [bot[1], top[1]], 'k-', lw=4, label="booster")
+        ax.plot(x_cm, y_cm, 'bo', ms=8, label="centre de masse")
+        ax.plot(*h_pt, 'rs', ms=10, label=r"point $h$ (centre de percussion)")
+        ax.plot(*bot, 'g^', ms=10, label="réacteur")
+        ax.plot(*top, 'k^', ms=8, label="sommet")
+        ax.set_aspect('equal')
+        ax.grid(True)
+        ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), borderaxespad=0.0)
+        ax.set_title(r"$h$ : à $\ell/6$ du centre de masse, vers le haut")
+        ax.set_xlim(-1.5, 1.5)
+        ax.set_ylim(-1.5, 1.5)
+        plt.tight_layout()
+        plt.show()
+
+    draw_geom()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 🧩 First and Second-Order Derivatives
 
     Compute $\dot{h}$ as a function of $\dot{x}$, $\dot{y}$, $\theta$ and $\dot{\theta}$ (and constants) and then $\ddot{h}$ as a function of $\theta$ and $z$ (and constants) when the auxiliary system is plugged in the booster.

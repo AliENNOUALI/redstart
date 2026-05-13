@@ -2501,7 +2501,7 @@ def _(M, g, l, np):
         return h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
 
 
-    return
+    return (Tr,)
 
 
 @app.cell(hide_code=True)
@@ -2571,6 +2571,26 @@ def _(M, g, l, np):
         dy = dh_y + (l / 6) * s * dtheta
         return x, dx, y, dy, theta, dtheta, z, dz
 
+    return (T_inv,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Vérification
+    """)
+    return
+
+
+@app.cell
+def _(Tr):
+    Tr(1.0 ,2.0 ,3.0, 4.0, 0.1, 0.2, -0.3, -0.4)
+    return
+
+
+@app.cell
+def _(T_inv, Tr):
+    T_inv(*Tr(1.0 ,2.0 ,3.0, 4.0, 0.1, 0.2, -0.3, -0.4))
     return
 
 

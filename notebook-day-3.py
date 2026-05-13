@@ -2556,6 +2556,24 @@ def _(mo):
     return
 
 
+@app.cell
+def _(M, g, l, np):
+    def T_inv(h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y):
+        norm = np.sqrt(d2h_x ** 2 + (d2h_y + g) ** 2)
+        z = -M * norm
+        theta = np.arctan2(-d2h_x, d2h_y + g)
+        s, c = np.sin(theta), np.cos(theta)
+        dz = M * (s * d3h_x - c * d3h_y)
+        dtheta = M * (c * d3h_x + s * d3h_y) / z
+        x = h_x + (l / 6) * s
+        y = h_y - (l / 6) * c
+        dx = dh_x + (l / 6) * c * dtheta
+        dy = dh_y + (l / 6) * s * dtheta
+        return x, dx, y, dy, theta, dtheta, z, dz
+
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
